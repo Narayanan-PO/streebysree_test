@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 import { products } from "@/lib/data";
 
 // Notice the 'async' and 'Promise' here—this is the new Next.js 16 requirement!
