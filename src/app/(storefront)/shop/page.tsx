@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 
+export const dynamic = 'force-dynamic';
+
 export default async function ShopPage() {
-  // 1. Fetch real data from Supabase
   const { data: products } = await supabase.from('products').select('*');
 
   return (
@@ -15,19 +16,18 @@ export default async function ShopPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3 xl:gap-x-8">
-        {/* We now use the real 'products' from the database! */}
-        {products?.map((product) => (
+        {products?.map((product: any) => (
           <Link key={product.id} href={`/product/${product.id}`} className="group block">
             <div className="aspect-[4/5] w-full overflow-hidden bg-stone-100 transition-opacity group-hover:opacity-90">
               <div className="flex h-full w-full items-center justify-center text-xs tracking-widest text-gray-400">
-                {product.name}
+                {product.Name}
               </div>
             </div>
             
             <div className="mt-6 flex flex-col items-center justify-center text-center text-sm">
-              <h3 className="font-medium tracking-wide text-gray-900">{product.name}</h3>
-              <p className="mt-1 text-xs text-gray-500 uppercase tracking-widest">{product.category}</p>
-              <p className="mt-3 font-medium text-gray-900">₹{product.price}</p>
+              <h3 className="font-medium tracking-wide text-gray-900">{product.Name}</h3>
+              <p className="mt-1 text-xs text-gray-500 uppercase tracking-widest">{product.Category}</p>
+              <p className="mt-3 font-medium text-gray-900">₹{product.Price}</p>
             </div>
           </Link>
         ))}
