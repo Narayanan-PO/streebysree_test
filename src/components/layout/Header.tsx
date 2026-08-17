@@ -13,11 +13,10 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b border-gray-100 bg-white/80 backdrop-blur-md">
-        {/* Increased height slightly to h-20 for a more premium feel */}
         <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           
-          {/* LEFT: Hamburger Toggle & Logo */}
-          <div className="flex w-1/2 md:w-1/3 items-center justify-start gap-3 sm:gap-4">
+          {/* LEFT: Hamburger Toggle (Mobile) & Navigation (Desktop) */}
+          <div className="flex flex-1 items-center justify-start gap-4">
             {/* Hamburger Button (Mobile Only) */}
             <button 
               onClick={() => setIsMobileMenuOpen(true)}
@@ -29,21 +28,31 @@ export default function Header() {
               <span className="block h-[1px] w-full bg-blue-950"></span>
             </button>
 
-            {/* Logo */}
+            {/* Desktop Navigation */}
+            <nav className="hidden md:flex space-x-8">
+              <Link href="/" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">Home</Link>
+              <Link href="/shop" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">Shop</Link>
+              <Link href="/about" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">About</Link>
+            </nav>
+          </div>
+          
+          {/* CENTER: Logo (Locked in the absolute center) */}
+          <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
             <Link href="/" className="text-lg sm:text-xl font-light tracking-widest text-blue-950 uppercase">
               StreebySree
             </Link>
           </div>
-          
-          {/* CENTER: Navigation (Locked in the absolute center, Desktop Only) */}
-          <nav className="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 space-x-10 md:flex">
-            <Link href="/" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">Home</Link>
-            <Link href="/shop" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">Shop</Link>
-            <Link href="/about" className="text-xs font-medium uppercase tracking-[0.2em] text-gray-500 transition-colors hover:text-amber-700">About</Link>
-          </nav>
 
-          {/* RIGHT: Cart */}
-          <div className="flex w-1/2 md:w-1/3 justify-end">
+          {/* RIGHT: Search & Cart */}
+          <div className="flex flex-1 items-center justify-end gap-6">
+            {/* Search Icon (Desktop Only - Adds visual balance) */}
+            <button className="hidden md:block text-blue-950 hover:text-amber-700 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+
+            {/* Cart Button */}
             <button 
               onClick={openCart}
               className="text-xs font-medium uppercase tracking-[0.2em] text-blue-950 transition-colors hover:text-amber-700"

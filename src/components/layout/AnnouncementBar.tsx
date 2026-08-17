@@ -2,7 +2,7 @@
 
 export default function AnnouncementBar() {
   // MASTER SWITCH: Change to 'false' to hide the banner completely
-  const isActive = false; 
+  const isActive = true; 
 
   if (!isActive) return null;
 
