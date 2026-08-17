@@ -75,36 +75,38 @@ export default async function ProductDetailPage({
             {product.Description || 'Crafted with precision from premium anti-tarnish materials, designed to be worn effortlessly every single day.'}
           </p>
 
-          {/* Action Area: Dual Buttons (Add to Cart & Instant Order Now) */}
-          <div className="mt-6 flex flex-col space-y-3 w-full max-w-[300px]">
-            {/* Existing Add to Cart / Quantity Manager */}
-            <AddToCartButton product={product} />
+          {/* Action Area: Centered Dual Buttons (Add to Cart & Instant Order Now) */}
+          <div className="mt-6 flex w-full justify-center md:justify-start">
+            <div className="flex flex-col space-y-3 w-full max-w-[300px]">
+              {/* Existing Add to Cart / Quantity Manager */}
+              <AddToCartButton product={product} />
 
-            {/* Instant WhatsApp Order Now Button */}
-            <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'flex',
-                height: '48px',
-                width: '100%',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: isOutOfStock ? '#d1d5db' : '#047857', // Emerald green for WhatsApp action
-                color: '#ffffff',
-                fontSize: '11px',
-                fontWeight: 500,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                border: 'none',
-                textDecoration: 'none',
-                cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                transition: 'background-color 0.3s ease'
-              }}
-            >
-              {isOutOfStock ? "Out of Stock" : "Order Now (WhatsApp)"}
-            </a>
+              {/* Instant WhatsApp Order Now Button */}
+              <a
+                href={whatsappUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  display: 'flex',
+                  height: '48px',
+                  width: '100%',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isOutOfStock ? '#d1d5db' : '#047857', // Emerald green for WhatsApp action
+                  color: '#ffffff',
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  border: 'none',
+                  textDecoration: 'none',
+                  cursor: isOutOfStock ? 'not-allowed' : 'pointer',
+                  transition: 'background-color 0.3s ease'
+                }}
+              >
+                {isOutOfStock ? "Out of Stock" : "Order Now (WhatsApp)"}
+              </a>
+            </div>
           </div>
 
           {/* Trust Badges & Flexible Shipping Note */}
