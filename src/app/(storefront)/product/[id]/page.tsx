@@ -57,26 +57,26 @@ export default async function ProductDetailPage({
 
         {/* Product Details & Actions - Compact & Refined */}
         <div className="flex flex-col pt-1">
-          <span className="text-[9px] font-medium tracking-[0.3em] text-amber-700 uppercase">
+          <span className="text-[9px] font-medium tracking-[0.3em] text-amber-700 uppercase flex justify-center md:justify-start">
             {product.Category || 'Jewellery'}
           </span>
           
-          <h1 className="mt-2 text-xl font-light tracking-wider text-blue-950 uppercase sm:text-3xl">
+          <h1 className="mt-2 text-xl font-light tracking-wider text-blue-950 uppercase sm:text-3xl flex justify-center md:justify-start text-center md:text-left">
             {productName}
           </h1>
           
-          <p className="mt-2 text-base font-medium text-gray-900 sm:text-lg">
+          <p className="mt-2 text-base font-medium text-gray-900 sm:text-lg flex justify-center md:justify-start">
             ₹{productPrice}
           </p>
 
           <div className="mt-4 h-[1px] w-full bg-stone-200"></div>
           
-          <p className="mt-4 text-xs font-light leading-relaxed text-gray-600 tracking-wide">
+          <p className="mt-4 text-xs font-light leading-relaxed text-gray-600 tracking-wide text-center md:text-left">
             {product.Description || 'Crafted with precision from premium anti-tarnish materials, designed to be worn effortlessly every single day.'}
           </p>
 
-          {/* Action Area: Centered Dual Buttons (Add to Cart & Instant Order Now) */}
-          <div className="mt-6 flex w-full justify-center md:justify-start">
+          {/* Action Area: Centered Dual Buttons for ALL screen sizes */}
+          <div className="mt-6 flex w-full justify-center">
             <div className="flex flex-col space-y-3 w-full max-w-[300px]">
               {/* Existing Add to Cart / Quantity Manager */}
               <AddToCartButton product={product} />
@@ -110,7 +110,7 @@ export default async function ProductDetailPage({
           </div>
 
           {/* Trust Badges & Flexible Shipping Note */}
-          <div className="mt-8 border-t border-stone-100 pt-5 space-y-1.5 text-[10px] font-light tracking-wider text-gray-500 uppercase">
+          <div className="mt-8 border-t border-stone-100 pt-5 space-y-1.5 text-[10px] font-light tracking-wider text-gray-500 uppercase flex flex-col items-center md:items-start text-center md:text-left">
             <p>✦ 100% Anti-Tarnish & Waterproof</p>
             <p>✦ Shipping charges may apply where applicable *</p>
           </div>
