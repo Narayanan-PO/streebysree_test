@@ -1,23 +1,46 @@
 'use client';
 
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
 import Link from "next/link";
 
 export default function CartDrawer() {
   const { cart, isCartOpen, closeCart, addToCart, decreaseQuantity } = useCart();
+  
+  // Track which items in the cart are selected for checkout
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+
+  // Automatically check new items when they are added to the cart
+  useEffect(() => {
+    setSelectedItemIds(prev => {
+      // Find items in the cart that aren't in our selected list yet
+      const newIds = cart.map(item => item.id).filter(id => !prev.includes(id));
+      // Add them to the selection
+      return [...prev, ...newIds];
+    });
+  }, [cart.length]); // Only runs when items are added/removed, NOT when quantity changes!
 
   if (!isCartOpen) return null;
 
-  const cartTotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+  // Toggle checkbox state
+  const toggleSelection = (id: string) => {
+    setSelectedItemIds(prev => 
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
 
-  // --- NEW CHECKOUT FUNCTION ---
+  // Only calculate totals and prepare checkout for SELECTED items
+  const selectedItems = cart.filter(item => selectedItemIds.includes(item.id));
+  const cartTotal = selectedItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+
+  // --- UPDATED CHECKOUT FUNCTION ---
   const handleCheckout = () => {
-    if (cart.length === 0) return;
+    if (selectedItems.length === 0) return;
 
     let message = "Hi StreebySree, I would like to place an order for the following items:%0A%0A";
     
-    cart.forEach((item) => {
-      message += `${item.quantity}x ${item.name} - ₹${item.price * item.quantity}%0A`;
+    selectedItems.forEach((item) => {
+      message += `✅ ${item.quantity}x ${item.name} - ₹${item.price * item.quantity}%0A`;
     });
 
     message += `%0A*Total: ₹${cartTotal}*%0A%0APlease let me know the next steps!`;
@@ -53,12 +76,22 @@ export default function CartDrawer() {
           ) : (
             <ul className="space-y-8">
               {cart.map((item) => (
-                <li key={item.id} className="flex gap-4">
+                <li key={item.id} className="flex gap-4 items-center">
+                  
+                  {/* --- SELECTION CHECKBOX --- */}
+                  <input 
+                    type="checkbox"
+                    checked={selectedItemIds.includes(item.id)}
+                    onChange={() => toggleSelection(item.id)}
+                    className="h-4 w-4 cursor-pointer accent-blue-950 flex-shrink-0"
+                    aria-label={`Select ${item.name}`}
+                  />
+
                   <Link href={`/product/${item.id}`} onClick={closeCart} className="h-24 w-20 flex-shrink-0 border border-stone-100 bg-white overflow-hidden">
                     <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform hover:scale-105" />
                   </Link>
 
-                  <div className="flex flex-1 flex-col justify-between">
+                  <div className="flex flex-1 flex-col justify-between h-full py-1">
                     <div>
                       <div className="flex justify-between">
                         <Link href={`/product/${item.id}`} onClick={closeCart} className="text-sm font-medium text-blue-950 hover:text-amber-700">
@@ -82,16 +115,26 @@ export default function CartDrawer() {
 
         {cart.length > 0 && (
           <div className="border-t border-stone-200 bg-white px-6 py-6">
-            <div className="flex justify-between text-sm font-medium text-blue-950 mb-6 uppercase tracking-wider">
-              <p>Subtotal</p>
+            <div className="flex justify-between text-sm font-medium text-blue-950 mb-1 uppercase tracking-wider">
+              <p>Selected Subtotal</p>
               <p>₹{cartTotal}</p>
             </div>
-            {/* --- UPDATED BUTTON --- */}
+            
+            <p className="text-[10px] text-gray-500 mb-5 uppercase tracking-wider">
+              {selectedItems.length} of {cart.length} items selected
+            </p>
+
+            {/* --- DYNAMIC CHECKOUT BUTTON --- */}
             <button 
               onClick={handleCheckout}
-              className="w-full bg-blue-950 py-4 text-xs font-medium tracking-[0.2em] text-white uppercase transition-colors hover:bg-blue-900"
+              disabled={selectedItems.length === 0}
+              className={`w-full py-4 text-xs font-medium tracking-[0.2em] uppercase transition-colors ${
+                selectedItems.length === 0 
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
+                  : "bg-blue-950 text-white hover:bg-blue-900"
+              }`}
             >
-              Proceed to Checkout
+              {selectedItems.length === 0 ? "Select Items to Buy" : "Proceed to Checkout"}
             </button>
           </div>
         )}
