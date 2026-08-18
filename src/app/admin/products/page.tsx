@@ -14,11 +14,15 @@ type Product = {
   Stock?: number;
   Image: string;
   Gallery?: string[];
+  DiscountPrice?: number;
+  discountprice?: number;
+  discount_price?: number;
 };
 
 const initialFormState = {
   Name: "",
   Price: "",
+  DiscountPrice: "",
   Category: "necklaces",
   Description: "",
   Material: "",
@@ -45,7 +49,7 @@ export default function AdminProducts() {
 
   async function fetchProducts() {
     setIsLoading(true);
-    const { data, error } = await supabase.from('products').select('*');
+    const { data, error } = await supabase.from('products').select('*').order('id', { ascending: false });
     if (error) console.error("Error fetching products:", error.message || error);
     else if (data) setProducts(data);
     setIsLoading(false);
@@ -61,6 +65,8 @@ export default function AdminProducts() {
     setFormData({
       Name: product.Name || "",
       Price: product.Price?.toString() || "",
+      // Check all spelling variations just in case
+      DiscountPrice: product.DiscountPrice?.toString() || product.discountprice?.toString() || product.discount_price?.toString() || "",
       Category: product.Category || "necklaces",
       Description: product.Description || "",
       Material: product.Material || "",
@@ -83,22 +89,16 @@ export default function AdminProducts() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // --- NEW: Handle Image File Uploads ---
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, isGallery: boolean = false) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     setIsUploading(true);
-
-    // Create a unique file name to prevent overriding existing images
     const fileExt = file.name.split('.').pop();
     const fileName = `${Math.random()}.${fileExt}`;
     const filePath = `${fileName}`;
 
-    // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('product-images')
-      .upload(filePath, file);
+    const { error: uploadError } = await supabase.storage.from('product-images').upload(filePath, file);
 
     if (uploadError) {
       alert('Error uploading image: ' + uploadError.message);
@@ -106,10 +106,8 @@ export default function AdminProducts() {
       return;
     }
 
-    // Get the public URL of the uploaded image
     const { data } = supabase.storage.from('product-images').getPublicUrl(filePath);
 
-    // Add it to the form data
     if (isGallery) {
       setFormData(prev => ({ ...prev, Gallery: [...prev.Gallery, data.publicUrl] }));
     } else {
@@ -131,7 +129,9 @@ export default function AdminProducts() {
     const productData = {
       ...formData,
       Price: parseFloat(formData.Price),
-      Stock: parseInt(formData.Stock),
+      // If the field is empty, send NULL to the database so it knows there is no discount
+      DiscountPrice: formData.DiscountPrice && formData.DiscountPrice.trim() !== "" ? parseFloat(formData.DiscountPrice) : null,
+      Stock: parseInt(formData.Stock) || 0,
       Gallery: formData.Gallery.filter(url => url.trim() !== "") 
     };
 
@@ -189,27 +189,39 @@ export default function AdminProducts() {
               ) : products.length === 0 ? (
                 <tr><td colSpan={5} className="px-6 py-12 text-center text-gray-400">No products found.</td></tr>
               ) : (
-                products.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-3">
+                products.map((product) => {
+                  const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null;
+                  
+                  return (
+                    <tr key={product.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-3">
                         <div className="h-12 w-12 rounded-md overflow-hidden bg-gray-100 border border-gray-200">
-                         <img 
-                             // Add the Gallery fallback logic here!
+                          <img 
                             src={product.Image || (product.Gallery && product.Gallery.length > 0 ? product.Gallery[0] : "https://via.placeholder.com/150")} 
                             alt={product.Name} 
                             className="h-full w-full object-cover"
-                            />
+                          />
                         </div>
-                        </td>
-                    <td className="px-6 py-4 font-medium text-gray-900">{product.Name}</td>
-                    <td className="px-6 py-4 capitalize">{product.Category}</td>
-                    <td className="px-6 py-4">₹{product.Price}</td>
-                    <td className="px-6 py-4 text-right space-x-4">
-                      <button onClick={() => openEditModal(product)} className="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
-                      <button onClick={() => handleDelete(product.id, product.Name)} className="text-red-500 hover:text-red-700 font-medium">Delete</button>
-                    </td>
-                  </tr>
-                ))
+                      </td>
+                      <td className="px-6 py-4 font-medium text-gray-900">{product.Name}</td>
+                      <td className="px-6 py-4 capitalize">{product.Category}</td>
+                      <td className="px-6 py-4">
+                        {discountPrice ? (
+                          <div className="flex flex-col">
+                            <span className="text-emerald-600 font-bold">₹{discountPrice}</span>
+                            <span className="text-[10px] text-gray-400 line-through">₹{product.Price}</span>
+                          </div>
+                        ) : (
+                          <span>₹{product.Price}</span>
+                        )}
+                      </td>
+                      <td className="px-6 py-4 text-right space-x-4">
+                        <button onClick={() => openEditModal(product)} className="text-blue-600 hover:text-blue-800 font-medium">Edit</button>
+                        <button onClick={() => handleDelete(product.id, product.Name)} className="text-red-500 hover:text-red-700 font-medium">Delete</button>
+                      </td>
+                    </tr>
+                  )
+                })
               )}
             </tbody>
           </table>
@@ -228,14 +240,19 @@ export default function AdminProducts() {
             <div className="p-6">
               <form onSubmit={handleFormSubmit} className="space-y-6">
                 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
+                {/* UPGRADED: 3-Column Layout for Pricing & Category */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-3">
                     <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Product Name</label>
                     <input required type="text" name="Name" value={formData.Name} onChange={handleFormChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-950 focus:border-blue-950" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Price (₹)</label>
+                    <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Original Price (₹)</label>
                     <input required type="number" name="Price" value={formData.Price} onChange={handleFormChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-950 focus:border-blue-950" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold tracking-wider text-emerald-700 uppercase mb-2">Sale Price (₹)</label>
+                    <input type="number" name="DiscountPrice" value={formData.DiscountPrice} onChange={handleFormChange} placeholder="Leave blank if no sale" className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-emerald-700 focus:border-emerald-700" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Category</label>
@@ -264,12 +281,17 @@ export default function AdminProducts() {
                     <input type="text" name="Finish" value={formData.Finish} onChange={handleFormChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-950" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Stock</label>
+                    {/* UPGRADED: Quick Action Out of Stock Button */}
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase">Stock</label>
+                      <button type="button" onClick={() => setFormData({...formData, Stock: "0"})} className="text-[10px] text-red-500 font-bold uppercase hover:underline">
+                        Mark Out of Stock
+                      </button>
+                    </div>
                     <input required type="number" name="Stock" value={formData.Stock} onChange={handleFormChange} className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-1 focus:ring-blue-950" />
                   </div>
                 </div>
 
-                {/* --- UPGRADED: Main Image Upload --- */}
                 <div className="border-t border-gray-100 pt-6">
                   <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase mb-2">Primary Image</label>
                   <div className="flex items-center gap-4">
@@ -288,7 +310,6 @@ export default function AdminProducts() {
                   </div>
                 </div>
 
-                {/* --- UPGRADED: Additional Gallery Images Upload --- */}
                 <div className="bg-gray-50 border border-gray-200 rounded-md p-4 mt-4">
                   <div className="flex items-center justify-between mb-4">
                     <label className="block text-xs font-bold tracking-wider text-gray-700 uppercase">Additional Gallery Images</label>

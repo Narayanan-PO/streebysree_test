@@ -18,7 +18,7 @@ export default function CartDrawer() {
       // Add them to the selection
       return [...prev, ...newIds];
     });
-  }, [cart.length]); // Only runs when items are added/removed, NOT when quantity changes!
+  }, [cart.length]); 
 
   if (!isCartOpen) return null;
 
@@ -37,13 +37,13 @@ export default function CartDrawer() {
   const handleCheckout = () => {
     if (selectedItems.length === 0) return;
 
-    let message = "Hi StreebySree, I would like to place an order for the following items:%0A%0A";
+    let message = "Hello Stree by Sree! ✦%0A%0AI would like to place an order for the following items:%0A%0A";
     
     selectedItems.forEach((item) => {
-      message += `✅ ${item.quantity}x ${item.name} - ₹${item.price * item.quantity}%0A`;
+      message += `✧ ${item.quantity}x ${item.name} - ₹${item.price * item.quantity}%0A`;
     });
 
-    message += `%0A*Total: ₹${cartTotal}*%0A%0APlease let me know the next steps!`;
+    message += `%0A*Total: ₹${cartTotal}*%0A%0APlease let me know the payment details. Thank you!`;
 
     // Opens WhatsApp in a new tab with the pre-filled message
     window.open(`https://wa.me/918891027146?text=${message}`, "_blank");
@@ -51,25 +51,30 @@ export default function CartDrawer() {
 
   return (
     <>
+      {/* Dark Overlay */}
       <div 
-        className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm transition-opacity"
+        className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm transition-opacity"
         onClick={closeCart}
       />
 
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-stone-200 bg-[#FAFAFA] shadow-2xl transition-transform duration-500">
+      {/* Sliding Drawer */}
+      <div className="fixed inset-y-0 right-0 z-[70] flex w-full max-w-md flex-col border-l border-stone-200 bg-[#FAF8F5] shadow-2xl transition-transform duration-500">
         
-        <div className="flex items-center justify-between border-b border-stone-200 px-6 py-4">
-          <h2 className="text-sm font-medium tracking-widest text-blue-950 uppercase">Your Cart</h2>
-          <button onClick={closeCart} className="text-gray-400 hover:text-blue-950 text-2xl font-light">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-stone-200 bg-white px-6 py-5">
+          <h2 className="text-sm font-medium tracking-widest text-stone-900 uppercase">Your Bag</h2>
+          <button onClick={closeCart} className="text-stone-400 hover:text-stone-900 transition-colors text-2xl font-light">
             ×
           </button>
         </div>
 
+        {/* Cart Items */}
         <div className="flex-1 overflow-y-auto px-6 py-8">
           {cart.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <p className="text-sm tracking-widest text-gray-500 uppercase">Your cart is empty</p>
-              <button onClick={closeCart} className="mt-8 border-b border-blue-950 pb-1 text-xs font-medium tracking-widest text-blue-950 uppercase hover:text-amber-700">
+              <span className="text-4xl text-[#8B5A2B] mb-4">✧</span>
+              <p className="text-xs tracking-widest text-stone-500 uppercase font-medium">Your bag is empty</p>
+              <button onClick={closeCart} className="mt-8 border-b border-stone-900 pb-1 text-xs font-medium tracking-widest text-stone-900 uppercase hover:text-[#8B5A2B] hover:border-[#8B5A2B] transition-colors">
                 Continue Shopping
               </button>
             </div>
@@ -83,28 +88,28 @@ export default function CartDrawer() {
                     type="checkbox"
                     checked={selectedItemIds.includes(item.id)}
                     onChange={() => toggleSelection(item.id)}
-                    className="h-4 w-4 cursor-pointer accent-blue-950 flex-shrink-0"
+                    className="h-4 w-4 cursor-pointer accent-[#8B5A2B] flex-shrink-0"
                     aria-label={`Select ${item.name}`}
                   />
 
-                  <Link href={`/product/${item.id}`} onClick={closeCart} className="h-24 w-20 flex-shrink-0 border border-stone-100 bg-white overflow-hidden">
-                    <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform hover:scale-105" />
+                  <Link href={`/product/${item.id}`} onClick={closeCart} className="h-24 w-20 flex-shrink-0 border border-stone-200 bg-white overflow-hidden">
+                    <img src={item.image} alt={item.name} className="h-full w-full object-cover transition-transform duration-700 hover:scale-105" />
                   </Link>
 
                   <div className="flex flex-1 flex-col justify-between h-full py-1">
                     <div>
-                      <div className="flex justify-between">
-                        <Link href={`/product/${item.id}`} onClick={closeCart} className="text-sm font-medium text-blue-950 hover:text-amber-700">
+                      <div className="flex justify-between items-start gap-2">
+                        <Link href={`/product/${item.id}`} onClick={closeCart} className="text-xs font-medium tracking-wider uppercase text-stone-900 hover:text-[#8B5A2B] transition-colors line-clamp-2">
                           {item.name}
                         </Link>
-                        <p className="text-sm font-medium text-gray-900">₹{item.price * item.quantity}</p>
+                        <p className="text-sm font-bold text-stone-900">₹{item.price * item.quantity}</p>
                       </div>
                     </div>
 
-                    <div className="flex items-center w-24 justify-between border border-stone-200 bg-white px-2 py-1">
-                      <button onClick={() => decreaseQuantity(item.id)} className="text-gray-500 hover:text-amber-700 font-medium px-2">-</button>
-                      <span className="text-xs font-medium text-blue-950">{item.quantity}</span>
-                      <button onClick={() => addToCart(item)} className="text-gray-500 hover:text-amber-700 font-medium px-2">+</button>
+                    <div className="flex items-center w-24 justify-between border border-stone-200 bg-white px-2 py-1 mt-2">
+                      <button onClick={() => decreaseQuantity(item.id)} className="text-stone-500 hover:text-stone-900 font-medium px-2 transition-colors">−</button>
+                      <span className="text-xs font-medium text-stone-900">{item.quantity}</span>
+                      <button onClick={() => addToCart(item)} className="text-stone-500 hover:text-stone-900 font-medium px-2 transition-colors">+</button>
                     </div>
                   </div>
                 </li>
@@ -113,14 +118,15 @@ export default function CartDrawer() {
           )}
         </div>
 
+        {/* Footer */}
         {cart.length > 0 && (
-          <div className="border-t border-stone-200 bg-white px-6 py-6">
-            <div className="flex justify-between text-sm font-medium text-blue-950 mb-1 uppercase tracking-wider">
+          <div className="border-t border-stone-200 bg-white px-6 py-6 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+            <div className="flex justify-between text-sm font-medium text-stone-900 mb-1 uppercase tracking-widest">
               <p>Selected Subtotal</p>
-              <p>₹{cartTotal}</p>
+              <p className="font-bold">₹{cartTotal}</p>
             </div>
             
-            <p className="text-[10px] text-gray-500 mb-5 uppercase tracking-wider">
+            <p className="text-[10px] text-stone-500 mb-5 uppercase tracking-wider">
               {selectedItems.length} of {cart.length} items selected
             </p>
 
@@ -128,13 +134,13 @@ export default function CartDrawer() {
             <button 
               onClick={handleCheckout}
               disabled={selectedItems.length === 0}
-              className={`w-full py-4 text-xs font-medium tracking-[0.2em] uppercase transition-colors ${
+              className={`w-full py-4 text-xs font-medium tracking-[0.2em] uppercase transition-colors shadow-sm ${
                 selectedItems.length === 0 
-                  ? "bg-gray-300 text-gray-500 cursor-not-allowed" 
-                  : "bg-blue-950 text-white hover:bg-blue-900"
+                  ? "bg-stone-200 text-stone-400 cursor-not-allowed" 
+                  : "bg-[#25D366] text-white hover:bg-[#128C7E]" // Using WhatsApp Green for highest conversion
               }`}
             >
-              {selectedItems.length === 0 ? "Select Items to Buy" : "Proceed to Checkout"}
+              {selectedItems.length === 0 ? "Select Items to Buy" : "Order via WhatsApp"}
             </button>
           </div>
         )}

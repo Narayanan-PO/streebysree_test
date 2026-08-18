@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useParams } from "next/navigation";
+import { useCart } from "@/context/CartContext";
 
 type Product = {
   id: string;
@@ -28,6 +29,9 @@ export default function ProductDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
 
+  // Bring in our Cart Context!
+  const { cart, addToCart, decreaseQuantity } = useCart();
+
   useEffect(() => {
     async function fetchProduct() {
       const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
@@ -49,6 +53,26 @@ export default function ProductDetailsPage() {
   const originalPrice = product.Price || 0;
   const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null;
 
+  // --- SMART CART LOGIC ---
+  const cartItem = cart.find(item => item.id === product.id);
+  const quantityInCart = cartItem ? cartItem.quantity : 0;
+
+  const handleAddToCart = () => {
+    addToCart({
+      id: product.id,
+      name: product.Name,
+      price: discountPrice || originalPrice,
+      image: activeImage,
+      quantity: 1
+    });
+  };
+
+  const handleDirectOrder = () => {
+    const price = discountPrice || originalPrice;
+    const message = `Hello Stree by Sree! ✦%0A%0AI would like to place a direct order for:%0A%0A✧ 1x ${product.Name} - ₹${price}%0A%0APlease let me know the payment details. Thank you!`;
+    window.open(`https://wa.me/918891027146?text=${message}`, "_blank");
+  };
+
   return (
     <div className="bg-[#FAF8F5] min-h-screen py-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -56,7 +80,7 @@ export default function ProductDetailsPage() {
           
           {/* LEFT: Image Gallery */}
           <div className="flex flex-col gap-4">
-            <div className="aspect-[4/5] w-full overflow-hidden bg-white border border-stone-200">
+            <div className="aspect-[4/5] w-full overflow-hidden bg-white">
               <img src={activeImage} alt={product.Name} className="w-full h-full object-cover object-center" />
             </div>
             
@@ -66,8 +90,8 @@ export default function ProductDetailsPage() {
                   <button 
                     key={index} 
                     onClick={() => setActiveImage(imgUrl)}
-                    className={`flex-shrink-0 w-20 h-24 overflow-hidden border transition-all ${
-                      activeImage === imgUrl ? 'border-[#8B5A2B] opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
+                    className={`flex-shrink-0 w-20 h-24 overflow-hidden transition-all border ${
+                      activeImage === imgUrl ? 'border-stone-900 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
                     }`}
                   >
                     <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
@@ -77,45 +101,87 @@ export default function ProductDetailsPage() {
             )}
           </div>
 
-          {/* RIGHT: Product Details */}
-          <div className="flex flex-col pt-4">
+          {/* RIGHT: Product Details (Styled exactly like the screenshot) */}
+          <div className="flex flex-col pt-2">
             <p className="text-[10px] text-stone-500 tracking-[0.2em] uppercase mb-3">{product.Category}</p>
-            <h1 className="text-2xl sm:text-3xl font-light text-stone-900 tracking-widest uppercase mb-6">{product.Name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-light text-stone-900 tracking-widest uppercase mb-4">{product.Name}</h1>
             
-            {/* Pricing Details */}
+            {/* Pricing */}
             <div className="mb-8">
               {discountPrice ? (
                 <div className="flex items-center gap-4">
-                  <p className="text-2xl font-bold text-stone-900">₹{discountPrice}</p>
-                  <p className="text-lg text-stone-400 line-through">₹{originalPrice}</p>
+                  <p className="text-xl font-medium text-stone-900">₹{discountPrice}</p>
+                  <p className="text-sm text-stone-400 line-through">₹{originalPrice}</p>
                   <span className="text-[10px] font-bold text-[#8B5A2B] tracking-widest uppercase border border-[#8B5A2B] px-2 py-1">Save ₹{originalPrice - discountPrice}</span>
                 </div>
               ) : (
-                <p className="text-2xl font-medium text-stone-900">₹{originalPrice}</p>
+                <p className="text-xl font-medium text-stone-900">₹{originalPrice}</p>
               )}
             </div>
             
-            <button disabled={product.Stock <= 0} className="w-full bg-stone-900 text-white py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-[#8B5A2B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-10">
-              {product.Stock > 0 ? "ADD TO CART" : "OUT OF STOCK"}
-            </button>
+            {/* Buttons Area */}
+            <div className="flex flex-col gap-3 mb-10">
+              {quantityInCart > 0 ? (
+                // The Inline - 1 + Selector
+                <div className="flex items-center justify-between w-full border border-stone-900 bg-white">
+                  <button onClick={() => decreaseQuantity(product.id)} className="px-6 py-4 text-stone-500 hover:text-stone-900 transition-colors text-lg">−</button>
+                  <span className="text-xs font-medium tracking-[0.2em] uppercase text-stone-900">{quantityInCart} In Bag</span>
+                  <button onClick={handleAddToCart} className="px-6 py-4 text-stone-500 hover:text-stone-900 transition-colors text-lg">+</button>
+                </div>
+              ) : (
+                // The Standard Add To Cart Button
+                <button 
+                  disabled={product.Stock <= 0} 
+                  onClick={handleAddToCart}
+                  className="w-full bg-stone-900 text-white py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-stone-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {product.Stock > 0 ? "ADD TO CART" : "OUT OF STOCK"}
+                </button>
+              )}
 
+              {/* Direct WhatsApp Order Button */}
+              <button 
+                disabled={product.Stock <= 0}
+                onClick={handleDirectOrder}
+                className="w-full border border-stone-900 text-stone-900 bg-transparent py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                ORDER VIA WHATSAPP
+              </button>
+            </div>
+
+            {/* Description (With clean dividers matching screenshot) */}
             {product.Description && (
-              <div className="mb-8">
-                <h3 className="text-[11px] font-semibold text-stone-900 uppercase tracking-[0.2em] mb-4">Description</h3>
-                <p className="text-stone-600 text-sm leading-relaxed font-light">{product.Description}</p>
+              <div className="mb-8 border-t border-stone-200 pt-6">
+                <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-[0.2em] mb-4">Description</h3>
+                <p className="text-stone-500 text-sm leading-relaxed font-light">{product.Description}</p>
               </div>
             )}
 
-            <div className="border-t border-stone-200 pt-8">
-              <h3 className="text-[11px] font-semibold text-stone-900 uppercase tracking-[0.2em] mb-4">Details</h3>
-              <ul className="space-y-3 text-sm text-stone-600 font-light">
-                {product.Material && <li className="flex"><span className="w-32 tracking-wider">Material:</span> <span>{product.Material}</span></li>}
-                {product.Finish && <li className="flex"><span className="w-32 tracking-wider">Finish:</span> <span>{product.Finish}</span></li>}
-                <li className="flex"><span className="w-32 tracking-wider">Availability:</span> 
-                  <span className={product.Stock > 0 ? "text-stone-900 font-medium" : "text-red-500"}>{product.Stock > 0 ? `${product.Stock} in stock` : "Out of Stock"}</span>
+            {/* Details Table */}
+            <div className="border-t border-stone-200 pt-6">
+              <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-[0.2em] mb-4">Details</h3>
+              <ul className="space-y-4 text-sm text-stone-500 font-light">
+                {product.Material && (
+                  <li className="grid grid-cols-3">
+                    <span className="col-span-1 text-stone-900">Material:</span> 
+                    <span className="col-span-2">{product.Material}</span>
+                  </li>
+                )}
+                {product.Finish && (
+                  <li className="grid grid-cols-3">
+                    <span className="col-span-1 text-stone-900">Finish:</span> 
+                    <span className="col-span-2">{product.Finish}</span>
+                  </li>
+                )}
+                <li className="grid grid-cols-3">
+                  <span className="col-span-1 text-stone-900">Availability:</span> 
+                  <span className={`col-span-2 ${product.Stock > 0 ? "text-stone-500" : "text-red-500"}`}>
+                    {product.Stock > 0 ? `${product.Stock} in stock` : "Out of Stock"}
+                  </span>
                 </li>
               </ul>
             </div>
+
           </div>
         </div>
       </div>
