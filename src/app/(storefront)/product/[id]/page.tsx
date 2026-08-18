@@ -1,121 +1,123 @@
+'use client';
+
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { notFound } from "next/navigation";
-import AddToCartButton from "@/components/layout/AddToCartButton";
+import { useParams } from "next/navigation";
 
-export const dynamic = 'force-dynamic';
+type Product = {
+  id: string;
+  Name: string;
+  Price: number;
+  Category: string;
+  Description?: string;
+  Material?: string;
+  Finish?: string;
+  Stock: number;
+  Image: string;
+  Gallery?: string[];
+  DiscountPrice?: number;
+  discountprice?: number;
+  discount_price?: number;
+};
 
-export default async function ProductDetailPage({ 
-  params 
-}: { 
-  params: Promise<{ id: string }> | { id: string } 
-}) {
-  const resolvedParams = await params;
-  const productId = resolvedParams.id;
-  const numericId = parseInt(productId, 10);
+export default function ProductDetailsPage() {
+  const params = useParams();
+  const productId = params.id as string;
 
-  if (isNaN(numericId)) {
-    notFound();
-  }
+  const [product, setProduct] = useState<Product | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState<string>("");
 
-  const { data: product, error } = await supabase
-    .from('products')
-    .select('*')
-    .eq('id', numericId)
-    .maybeSingle();
+  useEffect(() => {
+    async function fetchProduct() {
+      const { data, error } = await supabase.from('products').select('*').eq('id', productId).single();
+      
+      if (error) console.error("Error fetching product:", error);
+      else if (data) {
+        setProduct(data);
+        setActiveImage(data.Image || (data.Gallery?.[0] || "https://via.placeholder.com/600x800"));
+      }
+      setIsLoading(false);
+    }
+    if (productId) fetchProduct();
+  }, [productId]);
 
-  if (error || !product) {
-    notFound();
-  }
+  if (isLoading) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-stone-500 uppercase tracking-[0.2em] text-xs animate-pulse">Loading details...</div>;
+  if (!product) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-stone-500 uppercase tracking-widest text-xs">Product not found.</div>;
 
-  const imageUrl = product.Image || product.image || product.image_url;
-  const productName = product.Name || product.name || 'Product';
-  const productPrice = product.Price || product.price || 0;
-
-  // Direct WhatsApp instant buy pre-filled message using owner's number 8891027146
-  const whatsappMessage = encodeURIComponent(
-    `Hi! I would like to order this item immediately:\n\n*${productName}* (₹${productPrice})\nProduct ID: ${numericId}`
-  );
-  const whatsappUrl = `https://wa.me/918891027146?text=${whatsappMessage}`;
-
-  const isOutOfStock = product.Stock === 0 || product.stock === 0;
+  const allImages = [product.Image, ...(product.Gallery || [])].filter(Boolean);
+  const originalPrice = product.Price || 0;
+  const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null;
 
   return (
-    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-16 lg:px-8">
-      {/* Tighter gap and refined mobile layout */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-16 items-start">
-        
-        {/* Scaled-down Image Box for Mobile Elegance */}
-        <div className="aspect-[4/5] w-full max-w-xs mx-auto md:max-w-none overflow-hidden border border-stone-200 bg-[#FAFAFA]">
-          {imageUrl ? (
-            <img src={imageUrl} alt={productName} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs tracking-widest text-gray-400">
-              NO IMAGE AVAILABLE
+    <div className="bg-[#FAF8F5] min-h-screen py-16">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16">
+          
+          {/* LEFT: Image Gallery */}
+          <div className="flex flex-col gap-4">
+            <div className="aspect-[4/5] w-full overflow-hidden bg-white border border-stone-200">
+              <img src={activeImage} alt={product.Name} className="w-full h-full object-cover object-center" />
             </div>
-          )}
-        </div>
-
-        {/* Product Details & Actions - Compact & Refined */}
-        <div className="flex flex-col pt-1">
-          <span className="text-[9px] font-medium tracking-[0.3em] text-amber-700 uppercase flex justify-center md:justify-start">
-            {product.Category || 'Jewellery'}
-          </span>
-          
-          <h1 className="mt-2 text-xl font-light tracking-wider text-blue-950 uppercase sm:text-3xl flex justify-center md:justify-start text-center md:text-left">
-            {productName}
-          </h1>
-          
-          <p className="mt-2 text-base font-medium text-gray-900 sm:text-lg flex justify-center md:justify-start">
-            ₹{productPrice}
-          </p>
-
-          <div className="mt-4 h-[1px] w-full bg-stone-200"></div>
-          
-          <p className="mt-4 text-xs font-light leading-relaxed text-gray-600 tracking-wide text-center md:text-left">
-            {product.Description || 'Crafted with precision from premium anti-tarnish materials, designed to be worn effortlessly every single day.'}
-          </p>
-
-          {/* Action Area: Centered Dual Buttons for ALL screen sizes */}
-          <div className="mt-6 flex w-full justify-center">
-            <div className="flex flex-col space-y-3 w-full max-w-[300px]">
-              {/* Existing Add to Cart / Quantity Manager */}
-              <AddToCartButton product={product} />
-
-              {/* Instant WhatsApp Order Now Button */}
-              <a
-                href={whatsappUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                style={{
-                  display: 'flex',
-                  height: '48px',
-                  width: '100%',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  backgroundColor: isOutOfStock ? '#d1d5db' : '#047857', // Emerald green for WhatsApp action
-                  color: '#ffffff',
-                  fontSize: '11px',
-                  fontWeight: 500,
-                  letterSpacing: '0.2em',
-                  textTransform: 'uppercase',
-                  border: 'none',
-                  textDecoration: 'none',
-                  cursor: isOutOfStock ? 'not-allowed' : 'pointer',
-                  transition: 'background-color 0.3s ease'
-                }}
-              >
-                {isOutOfStock ? "Out of Stock" : "Order Now (WhatsApp)"}
-              </a>
-            </div>
+            
+            {allImages.length > 1 && (
+              <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar">
+                {allImages.map((imgUrl, index) => (
+                  <button 
+                    key={index} 
+                    onClick={() => setActiveImage(imgUrl)}
+                    className={`flex-shrink-0 w-20 h-24 overflow-hidden border transition-all ${
+                      activeImage === imgUrl ? 'border-[#8B5A2B] opacity-100' : 'border-transparent opacity-60 hover:opacity-100'
+                    }`}
+                  >
+                    <img src={imgUrl} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* Trust Badges & Flexible Shipping Note */}
-          <div className="mt-8 border-t border-stone-100 pt-5 space-y-1.5 text-[10px] font-light tracking-wider text-gray-500 uppercase flex flex-col items-center md:items-start text-center md:text-left">
-            <p>✦ 100% Anti-Tarnish & Waterproof</p>
-            <p>✦ Shipping charges may apply where applicable *</p>
+          {/* RIGHT: Product Details */}
+          <div className="flex flex-col pt-4">
+            <p className="text-[10px] text-stone-500 tracking-[0.2em] uppercase mb-3">{product.Category}</p>
+            <h1 className="text-2xl sm:text-3xl font-light text-stone-900 tracking-widest uppercase mb-6">{product.Name}</h1>
+            
+            {/* Pricing Details */}
+            <div className="mb-8">
+              {discountPrice ? (
+                <div className="flex items-center gap-4">
+                  <p className="text-2xl font-bold text-stone-900">₹{discountPrice}</p>
+                  <p className="text-lg text-stone-400 line-through">₹{originalPrice}</p>
+                  <span className="text-[10px] font-bold text-[#8B5A2B] tracking-widest uppercase border border-[#8B5A2B] px-2 py-1">Save ₹{originalPrice - discountPrice}</span>
+                </div>
+              ) : (
+                <p className="text-2xl font-medium text-stone-900">₹{originalPrice}</p>
+              )}
+            </div>
+            
+            <button disabled={product.Stock <= 0} className="w-full bg-stone-900 text-white py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-[#8B5A2B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-10">
+              {product.Stock > 0 ? "ADD TO CART" : "OUT OF STOCK"}
+            </button>
+
+            {product.Description && (
+              <div className="mb-8">
+                <h3 className="text-[11px] font-semibold text-stone-900 uppercase tracking-[0.2em] mb-4">Description</h3>
+                <p className="text-stone-600 text-sm leading-relaxed font-light">{product.Description}</p>
+              </div>
+            )}
+
+            <div className="border-t border-stone-200 pt-8">
+              <h3 className="text-[11px] font-semibold text-stone-900 uppercase tracking-[0.2em] mb-4">Details</h3>
+              <ul className="space-y-3 text-sm text-stone-600 font-light">
+                {product.Material && <li className="flex"><span className="w-32 tracking-wider">Material:</span> <span>{product.Material}</span></li>}
+                {product.Finish && <li className="flex"><span className="w-32 tracking-wider">Finish:</span> <span>{product.Finish}</span></li>}
+                <li className="flex"><span className="w-32 tracking-wider">Availability:</span> 
+                  <span className={product.Stock > 0 ? "text-stone-900 font-medium" : "text-red-500"}>{product.Stock > 0 ? `${product.Stock} in stock` : "Out of Stock"}</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
-
       </div>
     </div>
   );
