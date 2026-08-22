@@ -1,7 +1,7 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export default async function AboutPage() {
   const { data: settings } = await supabase.from('store_settings').select('*').eq('id', 1).single();

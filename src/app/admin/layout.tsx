@@ -1,12 +1,42 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  
+  // --- SECURITY STATE ---
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState("");
+  const [error, setError] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
+
+  // 🔒 THE MASTER PASSWORD (Change this to whatever you want!)
+  const MASTER_PASSWORD = "StreeBySree@2001"; 
+
+  // Check if the user already unlocked the dashboard this session
+  useEffect(() => {
+    const unlocked = sessionStorage.getItem("stree_admin_unlocked");
+    if (unlocked === "true") {
+      setIsAuthenticated(true);
+    }
+    setIsChecking(false);
+  }, []);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordInput === MASTER_PASSWORD) {
+      sessionStorage.setItem("stree_admin_unlocked", "true");
+      setIsAuthenticated(true);
+      setError(false);
+    } else {
+      setError(true);
+      setPasswordInput("");
+    }
+  };
 
   const navItems = [
     {
@@ -39,6 +69,49 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   ];
 
+  // While checking sessionStorage, show a blank background to prevent flashing
+  if (isChecking) return <div className="h-screen bg-[#F3F4F6]"></div>;
+
+  // 🛑 IF NOT LOGGED IN: Show the Login Screen
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4">
+        <div className="bg-white p-10 rounded-lg shadow-xl w-full max-w-sm border border-slate-200">
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-serif text-[#1E293B] mb-2">Stree by Sree</h1>
+            <p className="text-[10px] tracking-[0.2em] uppercase text-slate-400 font-bold">Admin Workspace</p>
+          </div>
+
+          <form onSubmit={handleLogin} className="flex flex-col gap-5">
+            <div>
+              <input 
+                type="password"
+                placeholder="Enter Master Password"
+                value={passwordInput}
+                onChange={(e) => setPasswordInput(e.target.value)}
+                className={`w-full px-4 py-3 bg-slate-50 border ${error ? 'border-red-500' : 'border-slate-200'} rounded-md focus:outline-none focus:ring-1 focus:ring-[#EAB308] text-sm text-center tracking-widest text-slate-900 transition-colors`}
+                autoFocus
+              />
+              {error && (
+                <p className="text-red-500 text-[10px] uppercase tracking-wider text-center mt-2 font-medium animate-pulse">
+                  Incorrect Password
+                </p>
+              )}
+            </div>
+            
+            <button 
+              type="submit"
+              className="w-full bg-[#1E293B] hover:bg-slate-800 text-[#EAB308] font-bold tracking-[0.2em] uppercase text-[10px] py-4 rounded-md transition-colors"
+            >
+              Unlock Dashboard
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ IF LOGGED IN: Show the normal Admin Dashboard
   return (
     <div className="flex h-screen bg-[#F3F4F6]">
       <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-[#1E293B] text-white transition-all duration-300 flex flex-col`}>
@@ -72,6 +145,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
             {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">View Store</span>}
            </Link>
+        </div>
+
+        <div className="px-3 pb-2 flex flex-col gap-1">
+           {/* Existing View Store Button */}
+           <Link href="/" target="_blank" className={`flex items-center gap-4 px-3 py-3 rounded-md transition-colors text-slate-300 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center' : ''}`} title="View Live Store">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
+            {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">View Store</span>}
+           </Link>
+           
+           {/* NEW LOGOUT BUTTON */}
+           <button 
+             onClick={() => {
+               sessionStorage.removeItem("stree_admin_unlocked");
+               setIsAuthenticated(false);
+             }}
+             className={`w-full flex items-center gap-4 px-3 py-3 rounded-md transition-colors text-red-400 hover:bg-red-500/10 hover:text-red-500 ${isCollapsed ? 'justify-center' : ''}`}
+             title="Logout"
+           >
+             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" />
+             </svg>
+             {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">Logout</span>}
+           </button>
         </div>
 
         <div className="p-4 border-t border-slate-700 flex justify-center">

@@ -28,10 +28,9 @@ export default function Header() {
       <header className="sticky top-0 z-50 w-full border-b border-stone-200 bg-[#FAF8F5]/90 backdrop-blur-md overflow-hidden">
         <div className="relative mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           
-          {/* --- NORMAL HEADER CONTENT (Fades out when searching) --- */}
+          {/* --- NORMAL HEADER CONTENT --- */}
           <div className={`flex w-full items-center justify-between transition-opacity duration-300 ${isSearchOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
             
-            {/* LEFT: Hamburger & Desktop Nav */}
             <div className="flex flex-1 items-center justify-start gap-4">
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
@@ -49,14 +48,12 @@ export default function Header() {
               </nav>
             </div>
             
-            {/* CENTER: Logo */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-              <Link href="/" className="text-2xl sm:text-3xl font-serif text-stone-900 tracking-wide">
+            <div className="flex flex-1 justify-center text-center">
+              <Link href="/" className="text-2xl sm:text-3xl font-serif text-stone-900 tracking-wide hover:text-[#8B5A2B] transition-colors">
                 Stree by Sree
               </Link>
             </div>
 
-            {/* RIGHT: Search & Cart Icons */}
             <div className="flex flex-1 items-center justify-end gap-5">
               <button 
                 onClick={() => setIsSearchOpen(true)}
@@ -85,12 +82,16 @@ export default function Header() {
             </div>
           </div>
 
-          {/* --- INLINE SEARCH BAR (Overlays perfectly inside the header) --- */}
+          {/* --- INLINE SEARCH BAR (Redesigned for Elegance) --- */}
           <div className={`absolute inset-0 flex items-center justify-center px-4 sm:px-8 transition-all duration-300 ${isSearchOpen ? 'opacity-100 z-20 translate-y-0' : 'opacity-0 pointer-events-none -translate-y-4'}`}>
-            <form onSubmit={handleSearchSubmit} className="flex w-full max-w-2xl items-center gap-4 border-b border-stone-400 pb-1 focus-within:border-stone-900 transition-colors">
-              <svg className="w-5 h-5 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <form onSubmit={handleSearchSubmit} className="flex w-full max-w-2xl items-center border-b border-stone-300 pb-2 focus-within:border-stone-900 transition-colors">
+              
+              {/* Left Magnifying Glass */}
+              <svg className="w-5 h-5 text-stone-400 flex-shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
+              
+              {/* Input Field */}
               <input 
                 type="text" 
                 placeholder="Search for jewelry..." 
@@ -99,13 +100,38 @@ export default function Header() {
                 className="flex-1 bg-transparent text-sm text-stone-900 focus:outline-none placeholder:text-stone-400 tracking-wider"
                 autoFocus={isSearchOpen}
               />
+              
+              {/* Delicate Submit Arrow */}
+              <button 
+                type="submit" 
+                disabled={!searchQuery.trim()}
+                className={`flex-shrink-0 px-2 transition-all duration-300 ${
+                  searchQuery.trim() 
+                    ? 'text-stone-800 hover:text-[#8B5A2B] opacity-100' 
+                    : 'text-stone-300 opacity-0 pointer-events-none'
+                }`}
+                aria-label="Submit Search"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M17.25 8.25L21 12m0 0l-3.75 3.75M21 12H3" />
+                </svg>
+              </button>
+
+              {/* Tiny Separator Line */}
+              <div className="h-4 w-[1px] bg-stone-300 mx-2"></div>
+
+              {/* Elegant Close 'X' */}
               <button 
                 type="button" 
-                onClick={() => setIsSearchOpen(false)}
-                className="text-[10px] font-bold tracking-[0.2em] text-stone-400 hover:text-stone-900 uppercase transition-colors"
+                onClick={() => { setIsSearchOpen(false); setSearchQuery(""); }}
+                className="flex-shrink-0 p-1 text-stone-400 hover:text-stone-900 transition-colors"
+                aria-label="Close Search"
               >
-                Cancel
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
+
             </form>
           </div>
 

@@ -29,7 +29,6 @@ export default function ProductDetailsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeImage, setActiveImage] = useState<string>("");
 
-  // Bring in our Cart Context!
   const { cart, addToCart, decreaseQuantity } = useCart();
 
   useEffect(() => {
@@ -52,6 +51,7 @@ export default function ProductDetailsPage() {
   const allImages = [product.Image, ...(product.Gallery || [])].filter(Boolean);
   const originalPrice = product.Price || 0;
   const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null;
+  const activePrice = discountPrice || originalPrice;
 
   // --- SMART CART LOGIC ---
   const cartItem = cart.find(item => item.id === product.id);
@@ -61,17 +61,17 @@ export default function ProductDetailsPage() {
     addToCart({
       id: product.id,
       name: product.Name,
-      price: discountPrice || originalPrice,
+      price: activePrice,
       image: activeImage,
       quantity: 1
     });
   };
 
-  const handleDirectOrder = () => {
-    const price = discountPrice || originalPrice;
-    const message = `Hello Stree by Sree! ✦%0A%0AI would like to place a direct order for:%0A%0A✧ 1x ${product.Name} - ₹${price}%0A%0APlease let me know the payment details. Thank you!`;
-    window.open(`https://wa.me/918891027146?text=${message}`, "_blank");
-  };
+  // Build a perfectly encoded URL for WhatsApp
+  const whatsappMessage = encodeURIComponent(
+    `Hello Stree by Sree! ✦\n\nI would like to place a direct order for:\n\n✧ 1x ${product.Name} - ₹${activePrice}\n\nPlease let me know the payment details. Thank you!`
+  );
+  const whatsappUrl = `https://wa.me/918891027146?text=${whatsappMessage}`;
 
   return (
     <div className="bg-[#FAF8F5] min-h-screen py-16">
@@ -101,7 +101,7 @@ export default function ProductDetailsPage() {
             )}
           </div>
 
-          {/* RIGHT: Product Details (Styled exactly like the screenshot) */}
+          {/* RIGHT: Product Details */}
           <div className="flex flex-col pt-2">
             <p className="text-[10px] text-stone-500 tracking-[0.2em] uppercase mb-3">{product.Category}</p>
             <h1 className="text-2xl sm:text-3xl font-light text-stone-900 tracking-widest uppercase mb-4">{product.Name}</h1>
@@ -122,14 +122,12 @@ export default function ProductDetailsPage() {
             {/* Buttons Area */}
             <div className="flex flex-col gap-3 mb-10">
               {quantityInCart > 0 ? (
-                // The Inline - 1 + Selector
                 <div className="flex items-center justify-between w-full border border-stone-900 bg-white">
                   <button onClick={() => decreaseQuantity(product.id)} className="px-6 py-4 text-stone-500 hover:text-stone-900 transition-colors text-lg">−</button>
                   <span className="text-xs font-medium tracking-[0.2em] uppercase text-stone-900">{quantityInCart} In Bag</span>
                   <button onClick={handleAddToCart} className="px-6 py-4 text-stone-500 hover:text-stone-900 transition-colors text-lg">+</button>
                 </div>
               ) : (
-                // The Standard Add To Cart Button
                 <button 
                   disabled={product.Stock <= 0} 
                   onClick={handleAddToCart}
@@ -139,17 +137,27 @@ export default function ProductDetailsPage() {
                 </button>
               )}
 
-              {/* Direct WhatsApp Order Button */}
-              <button 
-                disabled={product.Stock <= 0}
-                onClick={handleDirectOrder}
-                className="w-full border border-stone-900 text-stone-900 bg-transparent py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-stone-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              >
-                ORDER VIA WHATSAPP
-              </button>
+              {/* Direct WhatsApp Order Button (Now an Anchor Tag!) */}
+              {product.Stock > 0 ? (
+                <a 
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full border border-stone-900 text-stone-900 bg-transparent py-4 font-medium tracking-[0.2em] text-xs uppercase hover:bg-stone-100 transition-colors flex items-center justify-center gap-2 text-center"
+                >
+                  ORDER VIA WHATSAPP
+                </a>
+              ) : (
+                <button 
+                  disabled
+                  className="w-full border border-stone-900 text-stone-900 bg-transparent py-4 font-medium tracking-[0.2em] text-xs uppercase opacity-50 cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  ORDER VIA WHATSAPP
+                </button>
+              )}
             </div>
 
-            {/* Description (With clean dividers matching screenshot) */}
+            {/* Description */}
             {product.Description && (
               <div className="mb-8 border-t border-stone-200 pt-6">
                 <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-[0.2em] mb-4">Description</h3>
