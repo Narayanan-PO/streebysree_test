@@ -1,6 +1,14 @@
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 
-export default function AboutPage() {
+export const dynamic = 'force-dynamic';
+
+export default async function AboutPage() {
+  const { data: settings } = await supabase.from('store_settings').select('*').eq('id', 1).single();
+
+  const p1 = settings?.about_philosophy_p1 || "StreebySree was born out of a desire to bridge the gap between traditional elegance and modern convenience. We believe that jewelry should not just be for special occasions, locked away in a safe, but should be an effortless part of your everyday expression.";
+  const p2 = settings?.about_philosophy_p2 || "Our pieces are thoughtfully curated for the modern traditionalist—individuals who appreciate the rich aesthetics of classic design but require the durability for everyday wear. Every piece is crafted to look luxurious while being resilient enough for daily life.";
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       
@@ -22,13 +30,13 @@ export default function AboutPage() {
           {/* Brand Philosophy */}
           <div>
             <h2 className="text-xl font-light tracking-widest text-stone-800 uppercase mb-6">
-              The StreebySree Philosophy
+              The Philosophy
             </h2>
-            <p className="text-sm font-light leading-relaxed text-gray-600">
-              StreebySree was born out of a desire to bridge the gap between traditional elegance and modern convenience. We believe that jewelry should not just be for special occasions, locked away in a safe, but should be an effortless part of your everyday expression.
+            <p className="text-sm font-light leading-relaxed text-gray-600 whitespace-pre-wrap">
+              {p1}
             </p>
-            <p className="mt-4 text-sm font-light leading-relaxed text-gray-600">
-              Our pieces are thoughtfully curated for the modern traditionalist—individuals who appreciate the rich aesthetics of classic design but require the durability for everyday wear. Every piece is crafted to look luxurious while being resilient enough for daily life.
+            <p className="mt-4 text-sm font-light leading-relaxed text-gray-600 whitespace-pre-wrap">
+              {p2}
             </p>
           </div>
 

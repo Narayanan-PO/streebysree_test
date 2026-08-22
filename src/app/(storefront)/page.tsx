@@ -4,46 +4,57 @@ import Link from "next/link";
 export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const { data: featuredProducts, error } = await supabase
+  // 1. Fetch Store Settings
+  const { data: settings } = await supabase.from('store_settings').select('*').eq('id', 1).single();
+  
+  // 2. Fetch Categories
+  const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
+  const categories = categoriesData || [];
+
+  // 3. Fetch Featured Products
+  const { data: featuredProducts } = await supabase
     .from('products')
     .select('*')
-    .order('id', { ascending: true }) // Stops the jumping bug!
+    .order('id', { ascending: true })
     .limit(4);
-
   const products = featuredProducts || [];
 
-  // Updated categories to accept actual image URLs
-  // (If you leave imgUrl empty like '', it will beautifully display the first letter!)
-  // By leaving the imgUrl as an empty string (''), the code knows not to attempt 
-  // loading an image, and will gracefully display the centered "N" and "R" instead!
-  const categories = [
-    { name: 'Necklaces', imgUrl: '' }, 
-    { name: 'Earrings', imgUrl: 'https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=400&q=80' },
-    { name: 'Rings', imgUrl: '' }, 
-    { name: 'Bracelets', imgUrl: 'https://images.unsplash.com/photo-1611591437281-460bfbe1220a?w=400&q=80' }
-  ];
+  // Fallbacks just in case the database is empty
+  const heroImage = settings?.hero_image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?q=80&w=2940&auto=format&fit=crop";
+  const heroTagline = settings?.hero_tagline || "Adorning Every Stree";
+  const heroTitle = settings?.hero_title || "Stree by Sree";
+  const heroDesc = settings?.hero_description || "Traditional, lightweight, and anti-tarnish jewellery designed for everyday elegance.";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
       
+      {/* 0. PROMO BANNER (Only shows if active in Admin) */}
+      {settings?.promo_banner_active && settings?.promo_banner_text && (
+        <div className="w-full bg-[#8B5A2B] px-4 py-2 text-center transition-all">
+          <p className="text-xs font-medium tracking-[0.2em] text-white uppercase">
+            {settings.promo_banner_text}
+          </p>
+        </div>
+      )}
+
       {/* 1. HERO SECTION */}
       <section className="relative h-[75vh] w-full bg-[#3A2D23]">
         <img 
-          src="https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?q=80&w=2940&auto=format&fit=crop" 
-          alt="Traditional Jewelry" 
+          src={heroImage} 
+          alt={heroTitle} 
           className="absolute inset-0 h-full w-full object-cover opacity-60 mix-blend-overlay"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-[#2A2015]/80 to-transparent"></div>
         
         <div className="relative mx-auto flex h-full max-w-7xl flex-col items-center justify-center px-4 text-center">
           <span className="mb-4 text-xs font-medium tracking-[0.3em] text-[#D4AF37] uppercase drop-shadow-md">
-            Adorning Every Stree
+            {heroTagline}
           </span>
           <h1 className="mb-6 text-5xl font-serif text-[#FDFBF7] sm:text-7xl drop-shadow-lg">
-            Stree by Sree
+            {heroTitle}
           </h1>
           <p className="mb-10 max-w-md text-sm font-light leading-relaxed text-[#E8E1D9]">
-            Traditional, lightweight, and anti-tarnish jewellery designed for everyday elegance.
+            {heroDesc}
           </p>
           <Link 
             href="/shop" 
@@ -59,31 +70,34 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="mb-14 text-xl font-light tracking-[0.2em] text-stone-900 uppercase">Shop by Category</h2>
           
-          <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-12 max-w-5xl mx-auto">
-            {categories.map((category) => (
-              <Link key={category.name} href={`/category/${category.name.toLowerCase()}`} className="group flex flex-col items-center">
-                <div className="mb-5 aspect-square w-full max-w-[140px] overflow-hidden rounded-full bg-stone-100 p-1 border border-stone-300 transition-all duration-500 group-hover:border-[#8B5A2B] group-hover:shadow-lg">
-                  {/* BUG FIXED HERE: Removed onError and added letter fallback */}
-                  <div className="h-full w-full rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
-                    {category.imgUrl ? (
-                      <img 
-                        src={category.imgUrl} 
-                        alt={category.name} 
-                        className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
-                      />
-                    ) : (
-                      <span className="text-2xl font-light text-stone-500 uppercase tracking-widest">
-                        {category.name.charAt(0)}
-                      </span>
-                    )}
+          {categories.length === 0 ? (
+            <p className="text-sm text-stone-400 tracking-widest uppercase">No categories added yet.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-12 max-w-5xl mx-auto">
+              {categories.map((category) => (
+                <Link key={category.id} href={`/category/${category.name.toLowerCase()}`} className="group flex flex-col items-center">
+                  <div className="mb-5 aspect-square w-full max-w-[140px] overflow-hidden rounded-full bg-stone-100 p-1 border border-stone-300 transition-all duration-500 group-hover:border-[#8B5A2B] group-hover:shadow-lg">
+                    <div className="h-full w-full rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
+                      {category.image_url ? (
+                        <img 
+                          src={category.image_url} 
+                          alt={category.name} 
+                          className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                      ) : (
+                        <span className="text-2xl font-light text-stone-500 uppercase tracking-widest">
+                          {category.name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <span className="text-xs font-medium tracking-[0.2em] text-stone-700 uppercase transition-colors group-hover:text-[#8B5A2B]">
-                  {category.name}
-                </span>
-              </Link>
-            ))}
-          </div>
+                  <span className="text-xs font-medium tracking-[0.2em] text-stone-700 uppercase transition-colors group-hover:text-[#8B5A2B]">
+                    {category.name}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -104,8 +118,6 @@ export default async function HomePage() {
               const imageUrl = product.Image || (product.Gallery && product.Gallery.length > 0 ? product.Gallery[0] : null);
               const productName = product.Name || 'Product';
               const originalPrice = product.Price || 0;
-              
-              // Catches the price no matter how Supabase saved the capitalization!
               const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null; 
 
               return (
@@ -122,7 +134,6 @@ export default async function HomePage() {
                         NO IMAGE
                       </div>
                     )}
-                    {/* Optional: Add a subtle SALE badge if discounted */}
                     {discountPrice && (
                       <span className="absolute top-2 left-2 bg-[#8B5A2B] text-white text-[9px] font-bold tracking-widest uppercase px-2 py-1">
                         Sale
@@ -133,7 +144,6 @@ export default async function HomePage() {
                     {productName}
                   </h3>
                   
-                  {/* Discount Logic */}
                   {discountPrice ? (
                     <div className="flex items-center gap-3">
                       <p className="text-sm text-stone-900 font-bold">₹{discountPrice}</p>
