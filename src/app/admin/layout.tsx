@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false); // New state for mobile menu
   
   // --- SECURITY STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -14,10 +15,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [error, setError] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
-  // 🔒 THE MASTER PASSWORD (Change this to whatever you want!)
+  // 🔒 THE MASTER PASSWORD
   const MASTER_PASSWORD = "StreeBySree@2001"; 
 
-  // Check if the user already unlocked the dashboard this session
   useEffect(() => {
     const unlocked = sessionStorage.getItem("stree_admin_unlocked");
     if (unlocked === "true") {
@@ -25,6 +25,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
     setIsChecking(false);
   }, []);
+
+  // Close the mobile menu automatically if you click a link
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -69,10 +74,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   ];
 
-  // While checking sessionStorage, show a blank background to prevent flashing
   if (isChecking) return <div className="h-screen bg-[#F3F4F6]"></div>;
 
-  // 🛑 IF NOT LOGGED IN: Show the Login Screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4">
@@ -81,7 +84,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <h1 className="text-2xl font-serif text-[#1E293B] mb-2">Stree by Sree</h1>
             <p className="text-[10px] tracking-[0.2em] uppercase text-slate-400 font-bold">Admin Workspace</p>
           </div>
-
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
             <div>
               <input 
@@ -98,11 +100,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 </p>
               )}
             </div>
-            
-            <button 
-              type="submit"
-              className="w-full bg-[#1E293B] hover:bg-slate-800 text-[#EAB308] font-bold tracking-[0.2em] uppercase text-[10px] py-4 rounded-md transition-colors"
-            >
+            <button type="submit" className="w-full bg-[#1E293B] hover:bg-slate-800 text-[#EAB308] font-bold tracking-[0.2em] uppercase text-[10px] py-4 rounded-md transition-colors">
               Unlock Dashboard
             </button>
           </form>
@@ -111,10 +109,25 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // ✅ IF LOGGED IN: Show the normal Admin Dashboard
   return (
-    <div className="flex h-screen bg-[#F3F4F6]">
-      <aside className={`${isCollapsed ? 'w-20' : 'w-64'} bg-[#1E293B] text-white transition-all duration-300 flex flex-col`}>
+    <div className="flex h-screen bg-[#F3F4F6] overflow-hidden">
+      
+      {/* Mobile Dark Overlay (closes sidebar when tapped) */}
+      {isMobileOpen && (
+        <div 
+          className="fixed inset-0 bg-slate-900/50 z-40 md:hidden" 
+          onClick={() => setIsMobileOpen(false)}
+        />
+      )}
+
+      {/* SIDEBAR */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 transform 
+        ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+        md:relative md:translate-x-0 
+        ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64 
+        bg-[#1E293B] text-white transition-all duration-300 flex flex-col
+      `}>
         <div className={`h-20 flex items-center border-b border-slate-700 ${isCollapsed ? 'justify-center px-0' : 'px-6'}`}>
           <div className="overflow-hidden whitespace-nowrap">
             {isCollapsed ? (
@@ -140,21 +153,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           })}
         </nav>
 
-        <div className="px-3 pb-2">
-           <Link href="/" target="_blank" className={`flex items-center gap-4 px-3 py-3 rounded-md transition-colors text-slate-300 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center' : ''}`} title="View Live Store">
-            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
-            {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">View Store</span>}
-           </Link>
-        </div>
-
         <div className="px-3 pb-2 flex flex-col gap-1">
-           {/* Existing View Store Button */}
+           {/* Fixed: Removed the duplicate View Store button */}
            <Link href="/" target="_blank" className={`flex items-center gap-4 px-3 py-3 rounded-md transition-colors text-slate-300 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center' : ''}`} title="View Live Store">
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
             {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">View Store</span>}
            </Link>
            
-           {/* NEW LOGOUT BUTTON */}
            <button 
              onClick={() => {
                sessionStorage.removeItem("stree_admin_unlocked");
@@ -170,7 +175,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
            </button>
         </div>
 
-        <div className="p-4 border-t border-slate-700 flex justify-center">
+        {/* Desktop-only collapse button */}
+        <div className="hidden md:flex p-4 border-t border-slate-700 justify-center">
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors w-full flex justify-center" title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
             <svg className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
@@ -178,7 +184,31 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </button>
         </div>
       </aside>
-      <main className="flex-1 overflow-y-auto bg-slate-50"><div className="p-8 h-full">{children}</div></main>
+
+      {/* MAIN CONTENT WRAPPER */}
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-50">
+        
+        {/* Mobile Header with Hamburger Icon */}
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm z-30">
+          <div className="flex flex-col">
+            <span className="text-sm font-bold tracking-wider text-[#1E293B] uppercase">StreebySree</span>
+            <span className="text-[10px] text-slate-500 tracking-widest uppercase">Admin</span>
+          </div>
+          <button 
+            onClick={() => setIsMobileOpen(true)} 
+            className="p-2 text-slate-600 hover:bg-slate-100 rounded-md"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 12h18M3 6h18M3 18h18" />
+            </svg>
+          </button>
+        </div>
+
+        {/* The actual page content */}
+        <div className="flex-1 overflow-y-auto">
+          {children}
+        </div>
+      </main>
     </div>
   );
 }
