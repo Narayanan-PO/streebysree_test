@@ -35,7 +35,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="mb-8">
         <h1 className="text-2xl font-serif text-[#1E293B]">Welcome Back</h1>
         <p className="text-sm text-slate-500 mt-1">Here is the current status of your inventory.</p>
