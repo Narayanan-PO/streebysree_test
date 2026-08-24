@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isMobileOpen, setIsMobileOpen] = useState(false); // New state for mobile menu
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   
   // --- SECURITY STATE ---
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -78,7 +78,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#F3F4F6] flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] w-full bg-[#F3F4F6] flex items-center justify-center p-4 overflow-hidden">
         <div className="bg-white p-10 rounded-lg shadow-xl w-full max-w-sm border border-slate-200">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-serif text-[#1E293B] mb-2">Stree by Sree</h1>
@@ -110,9 +110,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="flex h-screen bg-[#F3F4F6] overflow-hidden">
+    // FIXED: Changed h-screen to h-[100dvh] and added w-full overflow-hidden to stop horizontal scrolling
+    <div className="flex h-[100dvh] w-full bg-[#F3F4F6] overflow-hidden">
       
-      {/* Mobile Dark Overlay (closes sidebar when tapped) */}
+      {/* Mobile Dark Overlay */}
       {isMobileOpen && (
         <div 
           className="fixed inset-0 bg-slate-900/50 z-40 md:hidden" 
@@ -154,7 +155,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </nav>
 
         <div className="px-3 pb-2 flex flex-col gap-1">
-           {/* Fixed: Removed the duplicate View Store button */}
            <Link href="/" target="_blank" className={`flex items-center gap-4 px-3 py-3 rounded-md transition-colors text-slate-300 hover:bg-slate-800 hover:text-white ${isCollapsed ? 'justify-center' : ''}`} title="View Live Store">
             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" /></svg>
             {!isCollapsed && <span className="text-sm font-medium whitespace-nowrap">View Store</span>}
@@ -175,7 +175,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
            </button>
         </div>
 
-        {/* Desktop-only collapse button */}
         <div className="hidden md:flex p-4 border-t border-slate-700 justify-center">
           <button onClick={() => setIsCollapsed(!isCollapsed)} className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-md transition-colors w-full flex justify-center" title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}>
             <svg className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,26 +185,26 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* MAIN CONTENT WRAPPER */}
-      <main className="flex-1 flex flex-col min-w-0 bg-slate-50">
+      <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
         
-        {/* Mobile Header with Hamburger Icon */}
-        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center justify-between shadow-sm z-30">
-          <div className="flex flex-col">
-            <span className="text-sm font-bold tracking-wider text-[#1E293B] uppercase">StreebySree</span>
-            <span className="text-[10px] text-slate-500 tracking-widest uppercase">Admin</span>
-          </div>
+        {/* FIXED: Hamburger moved to LEFT, w-full applied */}
+        <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm z-30 w-full">
           <button 
             onClick={() => setIsMobileOpen(true)} 
-            className="p-2 text-slate-600 hover:bg-slate-100 rounded-md"
+            className="p-2 -ml-2 text-slate-600 hover:bg-slate-100 rounded-md flex-shrink-0"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M3 12h18M3 6h18M3 18h18" />
             </svg>
           </button>
+          <div className="flex flex-col truncate">
+            <span className="text-sm font-bold tracking-wider text-[#1E293B] uppercase truncate">StreebySree</span>
+            <span className="text-[10px] text-slate-500 tracking-widest uppercase">Admin</span>
+          </div>
         </div>
 
-        {/* The actual page content */}
-        <div className="flex-1 overflow-y-auto">
+        {/* The actual page content - LOCKED horizontal scrolling */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
           {children}
         </div>
       </main>
