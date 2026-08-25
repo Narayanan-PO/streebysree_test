@@ -15,18 +15,20 @@ type Product = {
   DiscountPrice?: number;
   discountprice?: number;
   discount_price?: number;
+  is_bestseller?: boolean; 
 };
 
 function ShopGrid() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search') || "";
-  const categoryQuery = searchParams.get('category') || ""; // 1. WE ADDED THIS
+  const categoryQuery = searchParams.get('category') ? decodeURIComponent(searchParams.get('category') as string) : "";
+  const bestsellerQuery = searchParams.get('bestseller') === 'true';
   
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // 1. Fetch ALL products ONCE when the page loads
+  // Fetch ALL products ONCE when the page loads
   useEffect(() => {
     async function fetchLiveProducts() {
       setIsLoading(true);
@@ -39,51 +41,56 @@ function ShopGrid() {
         console.error("Error loading products:", error);
       } else if (data) {
         setAllProducts(data);
-        setDisplayedProducts(data); // Default to showing everything
+        setDisplayedProducts(data); 
       }
       setIsLoading(false);
     }
     fetchLiveProducts();
   }, []); 
 
-  // 2. FORCE the screen to update whenever the search URL, category URL, or products change
+  // FORCE the screen to update whenever URLs or products change
   useEffect(() => {
     if (allProducts.length === 0) return;
 
-    // Start with all products
     let filtered = allProducts;
 
-    // 3. APPLY CATEGORY FILTER FIRST (If they clicked a menu link)
-    if (categoryQuery) {
-      filtered = filtered.filter(
-        (product) => (product.Category || "").toLowerCase().trim() === categoryQuery.toLowerCase().trim()
-      );
+    // 1. APPLY BESTSELLER FILTER
+    if (bestsellerQuery) {
+      filtered = filtered.filter((product) => product.is_bestseller === true);
     }
 
-    // 4. APPLY SEARCH FILTER SECOND (If they used the search bar)
+    // 2. APPLY CATEGORY FILTER (Ultra-Bulletproof Match)
+    if (categoryQuery) {
+      const cleanQuery = categoryQuery.toLowerCase().replace(/[^a-z0-9]/g, '');
+      
+      filtered = filtered.filter((product) => {
+        const cleanProdCategory = String(product.Category || "").toLowerCase().replace(/[^a-z0-9]/g, '');
+        if (!cleanQuery || !cleanProdCategory) return false;
+        return cleanProdCategory.includes(cleanQuery) || cleanQuery.includes(cleanProdCategory);
+      });
+    }
+
+    // 3. APPLY SEARCH FILTER
     if (searchQuery) {
       const q = searchQuery.toLowerCase().trim();
       filtered = filtered.filter((product) => {
         const name = (product.Name || "").toLowerCase();
         const category = (product.Category || "").toLowerCase();
 
-        // STRICT MATCH: If they type exactly "ring", block "earring"
         if (q === "ring" || q === "rings") {
           const ringRegex = /\bring(s)?\b/i;
           return ringRegex.test(name) || ringRegex.test(category);
         }
 
-        // BROAD MATCH: (e.g., "neck" -> "necklace")
         return name.includes(q) || category.includes(q);
       });
     }
 
-    // Update the state so React actually redraws the screen!
     setDisplayedProducts(filtered);
     
-  }, [searchQuery, categoryQuery, allProducts]); // Added categoryQuery to dependencies
+  }, [searchQuery, categoryQuery, bestsellerQuery, allProducts]); 
 
-  // 5. DYNAMIC HEADER LOGIC
+  // DYNAMIC HEADER LOGIC
   let headerTitle = "Our Collection";
   let headerSubtitle = "Browse our complete range of handcrafted jewelry.";
   
@@ -93,7 +100,16 @@ function ShopGrid() {
   } else if (categoryQuery) {
     headerTitle = `${categoryQuery}`;
     headerSubtitle = `Explore our curated selection of ${categoryQuery.toLowerCase()}.`;
+  } else if (bestsellerQuery) {
+    headerTitle = "Most Loved";
+    headerSubtitle = "Shop our highest-rated and bestselling pieces.";
   }
+
+  // --- NEW X-RAY DEBUGGING LOGIC ---
+  // This grabs every single category currently attached to your products
+  const actualDatabaseCategories = Array.from(
+    new Set(allProducts.map(p => p.Category ? `"${p.Category}"` : "EMPTY_OR_NULL"))
+  ).join(", ");
 
   return (
     <>
@@ -118,9 +134,20 @@ function ShopGrid() {
           <p className="text-stone-500 text-sm tracking-wider uppercase mb-4">
             {searchQuery 
               ? `No products found for "${searchQuery}".` 
-              : `No products currently available in ${categoryQuery}.`}
+              : `No products currently available.`}
           </p>
-          <Link href="/shop" className="text-xs font-bold tracking-[0.2em] text-[#8B5A2B] hover:text-stone-900 uppercase transition-colors">
+
+          {/* THE X-RAY BOX: Only shows up when things are broken! */}
+          {categoryQuery && (
+            <div className="mt-4 p-6 bg-red-50 border border-red-200 text-red-900 text-xs text-left max-w-2xl mx-auto rounded-sm">
+              <strong className="text-sm tracking-widest uppercase mb-2 block">Database Mismatch Detected</strong>
+              <p className="mb-2">The website is looking for products tagged with: <strong>"{categoryQuery}"</strong></p>
+              <p>But the actual tags on the products in your Supabase database are:</p>
+              <p className="mt-2 font-mono bg-white p-3 border border-red-100">{actualDatabaseCategories}</p>
+            </div>
+          )}
+
+          <Link href="/shop" className="mt-8 text-xs font-bold tracking-[0.2em] text-[#8B5A2B] hover:text-stone-900 uppercase transition-colors">
             View All Collections ⟶
           </Link>
         </div>

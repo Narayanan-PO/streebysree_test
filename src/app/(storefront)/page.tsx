@@ -1,6 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel"; // 1. ADDED IMPORT
+import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 
 export const revalidate = 60;
 
@@ -12,7 +12,7 @@ export default async function HomePage() {
   const { data: categoriesData } = await supabase.from('categories').select('*').order('name');
   const categories = categoriesData || [];
 
-  // 3. Fetch Featured Products
+  // 3. Fetch Trending/Featured Products
   const { data: featuredProducts } = await supabase
     .from('products')
     .select('*')
@@ -25,8 +25,16 @@ export default async function HomePage() {
     .from('testimonials')
     .select('*')
     .eq('is_active', true)
-    .order('created_at', { ascending: false }); // 2. REMOVED .limit(3)
+    .order('created_at', { ascending: false });
   const testimonials = testimonialData || [];
+
+  // 5. Fetch Bestsellers specifically
+  const { data: bestsellerData } = await supabase
+    .from('products')
+    .select('*')
+    .eq('is_bestseller', true)
+    .limit(4);
+  const bestsellers = bestsellerData || [];
 
   // Fallbacks just in case the database is empty
   const heroImage = settings?.hero_image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?q=80&w=2940&auto=format&fit=crop";
@@ -78,6 +86,79 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* BESTSELLERS / MOST LOVED BANNER */}
+      {bestsellers.length > 0 && (() => {
+        const count = bestsellers.length;
+        const gridColsClass =
+          count === 1 ? 'sm:grid-cols-1' :
+          count === 2 ? 'sm:grid-cols-2' :
+          count === 3 ? 'sm:grid-cols-3' :
+          'sm:grid-cols-4';
+        const maxWidthClass =
+          count === 1 ? 'max-w-xs' :
+          count === 2 ? 'max-w-2xl' :
+          count === 3 ? 'max-w-4xl' :
+          'max-w-7xl';
+
+        return (
+          <section className="py-20 sm:py-28 bg-[#FAF8F5]">
+            <div className={`mx-auto px-4 sm:px-6 lg:px-8 ${maxWidthClass}`}>
+              <div className="mb-14 flex flex-col items-center justify-between sm:flex-row">
+                <h2 className="mb-4 text-xl font-light tracking-[0.2em] text-stone-900 uppercase sm:mb-0">
+                  Most Loved
+                </h2>
+                <Link href="/shop?bestseller=true" className="border-b border-[#8B5A2B] pb-1 text-xs font-medium tracking-[0.2em] text-[#8B5A2B] uppercase transition-colors hover:text-stone-900 hover:border-stone-900">
+                  Shop Bestsellers
+                </Link>
+              </div>
+
+              <div className={`grid grid-cols-2 gap-x-6 gap-y-12 sm:gap-x-8 sm:gap-y-16 justify-items-center ${gridColsClass}`}>
+                {bestsellers.map((product) => {
+                  const imageUrl = product.Image || (product.Gallery && product.Gallery.length > 0 ? product.Gallery[0] : null);
+                  const productName = product.Name || 'Product';
+                  const originalPrice = product.Price || 0;
+                  const discountPrice = product.DiscountPrice || product.discountprice || product.discount_price || null;
+
+                  return (
+                    <Link key={product.id} href={`/product/${product.id}`} className="group flex flex-col w-full">
+                      <div className="mb-5 aspect-[4/5] w-full overflow-hidden bg-white border border-stone-200 relative">
+                        <div className="absolute top-2 right-2 z-10 bg-[#D4AF37] text-white text-[9px] font-bold tracking-widest uppercase px-2 py-1 shadow-sm">
+                          Bestseller
+                        </div>
+
+                        {imageUrl ? (
+                          <img
+                            src={imageUrl}
+                            alt={productName}
+                            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-[10px] tracking-widest text-stone-400">
+                            NO IMAGE
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="text-xs font-medium tracking-wider text-stone-800 uppercase line-clamp-1 mb-2">
+                        {productName}
+                      </h3>
+
+                      {discountPrice ? (
+                        <div className="flex items-center gap-3">
+                          <p className="text-sm text-stone-900 font-bold">₹{discountPrice}</p>
+                          <p className="text-xs text-stone-400 line-through">₹{originalPrice}</p>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-stone-900 font-medium">₹{originalPrice}</p>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
       {/* 2. SHOP BY CATEGORY */}
       <section className="py-20 sm:py-28">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 text-center">
@@ -88,7 +169,7 @@ export default async function HomePage() {
           ) : (
             <div className="grid grid-cols-2 gap-8 sm:grid-cols-4 sm:gap-12 max-w-5xl mx-auto">
               {categories.map((category) => (
-                <Link key={category.id} href={`/category/${category.name.toLowerCase()}`} className="group flex flex-col items-center">
+                <Link key={category.id} href={`/shop?category=${encodeURIComponent(category.name)}`} className="group flex flex-col items-center">
                   <div className="mb-5 aspect-square w-full max-w-[140px] overflow-hidden rounded-full bg-stone-100 p-1 border border-stone-300 transition-all duration-500 group-hover:border-[#8B5A2B] group-hover:shadow-lg">
                     <div className="h-full w-full rounded-full overflow-hidden bg-stone-200 flex items-center justify-center">
                       {category.image_url ? (
@@ -224,7 +305,6 @@ export default async function HomePage() {
       </section>
 
       {/* 6. TESTIMONIALS CAROUSEL */}
-      {/* 3. SWAPPED OUT THE STATIC HTML FOR YOUR NEW COMPONENT */}
       <TestimonialsCarousel testimonials={testimonials} />
       
     </div>
