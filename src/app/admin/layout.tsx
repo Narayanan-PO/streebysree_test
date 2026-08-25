@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isChecking, setIsChecking] = useState(true);
 
   // 🔒 THE MASTER PASSWORD
-  const MASTER_PASSWORD = "Admin"; 
+  const MASTER_PASSWORD = "StreebySree@2001"; 
 
   useEffect(() => {
     const unlocked = sessionStorage.getItem("stree_admin_unlocked");
