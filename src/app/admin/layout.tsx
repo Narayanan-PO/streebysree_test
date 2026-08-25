@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isChecking, setIsChecking] = useState(true);
 
   // 🔒 THE MASTER PASSWORD
-  const MASTER_PASSWORD = "StreeBySree@2001"; 
+  const MASTER_PASSWORD = "Admin"; 
 
   useEffect(() => {
     const unlocked = sessionStorage.getItem("stree_admin_unlocked");
@@ -110,7 +110,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    // FIXED: Changed h-screen to h-[100dvh] and added w-full overflow-hidden to stop horizontal scrolling
     <div className="flex h-[100dvh] w-full bg-[#F3F4F6] overflow-hidden">
       
       {/* Mobile Dark Overlay */}
@@ -187,7 +186,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* MAIN CONTENT WRAPPER */}
       <main className="flex-1 flex flex-col min-w-0 bg-slate-50 overflow-hidden">
         
-        {/* FIXED: Hamburger moved to LEFT, w-full applied */}
+        {/* Mobile top bar */}
         <div className="md:hidden bg-white border-b border-slate-200 px-4 py-3 flex items-center gap-3 shadow-sm z-30 w-full">
           <button 
             onClick={() => setIsMobileOpen(true)} 
@@ -203,8 +202,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
-        {/* The actual page content - LOCKED horizontal scrolling */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full">
+        {/* FIXED: added consistent padding so content isn't flush against the sidebar border */}
+        <div className="flex-1 overflow-y-auto overflow-x-hidden w-full p-6 md:p-10">
           {children}
         </div>
       </main>

@@ -20,6 +20,7 @@ type Product = {
 function ShopGrid() {
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search') || "";
+  const categoryQuery = searchParams.get('category') || ""; // 1. WE ADDED THIS
   
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [displayedProducts, setDisplayedProducts] = useState<Product[]>([]);
@@ -45,46 +46,64 @@ function ShopGrid() {
     fetchLiveProducts();
   }, []); 
 
-  // 2. FORCE the screen to update whenever the search URL or products change
+  // 2. FORCE the screen to update whenever the search URL, category URL, or products change
   useEffect(() => {
     if (allProducts.length === 0) return;
 
-    // If the search bar is empty, show everything
-    if (!searchQuery) {
-      setDisplayedProducts(allProducts);
-      return;
+    // Start with all products
+    let filtered = allProducts;
+
+    // 3. APPLY CATEGORY FILTER FIRST (If they clicked a menu link)
+    if (categoryQuery) {
+      filtered = filtered.filter(
+        (product) => (product.Category || "").toLowerCase().trim() === categoryQuery.toLowerCase().trim()
+      );
     }
 
-    const q = searchQuery.toLowerCase().trim();
+    // 4. APPLY SEARCH FILTER SECOND (If they used the search bar)
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((product) => {
+        const name = (product.Name || "").toLowerCase();
+        const category = (product.Category || "").toLowerCase();
 
-    const filtered = allProducts.filter((product) => {
-      const name = (product.Name || "").toLowerCase();
-      const category = (product.Category || "").toLowerCase();
+        // STRICT MATCH: If they type exactly "ring", block "earring"
+        if (q === "ring" || q === "rings") {
+          const ringRegex = /\bring(s)?\b/i;
+          return ringRegex.test(name) || ringRegex.test(category);
+        }
 
-      // STRICT MATCH: If they type exactly "ring", block "earring"
-      if (q === "ring" || q === "rings") {
-        const ringRegex = /\bring(s)?\b/i;
-        return ringRegex.test(name) || ringRegex.test(category);
-      }
-
-      // BROAD MATCH: (e.g., "neck" -> "necklace")
-      return name.includes(q) || category.includes(q);
-    });
+        // BROAD MATCH: (e.g., "neck" -> "necklace")
+        return name.includes(q) || category.includes(q);
+      });
+    }
 
     // Update the state so React actually redraws the screen!
     setDisplayedProducts(filtered);
     
-  }, [searchQuery, allProducts]);
+  }, [searchQuery, categoryQuery, allProducts]); // Added categoryQuery to dependencies
+
+  // 5. DYNAMIC HEADER LOGIC
+  let headerTitle = "Our Collection";
+  let headerSubtitle = "Browse our complete range of handcrafted jewelry.";
+  
+  if (searchQuery) {
+    headerTitle = `Results for "${searchQuery}"`;
+    headerSubtitle = "Discover pieces matching your search.";
+  } else if (categoryQuery) {
+    headerTitle = `${categoryQuery}`;
+    headerSubtitle = `Explore our curated selection of ${categoryQuery.toLowerCase()}.`;
+  }
 
   return (
     <>
       <div className="text-center mb-16">
         <h1 className="text-2xl font-light tracking-widest text-stone-900 uppercase mb-4">
-          {searchQuery ? `Results for "${searchQuery}"` : "Our Collection"}
+          {headerTitle}
         </h1>
         <div className="w-12 h-[1px] bg-[#8B5A2B] mx-auto mb-4"></div>
         <p className="text-stone-500 max-w-2xl mx-auto text-xs font-light tracking-wider uppercase">
-          {searchQuery ? "Discover pieces matching your search." : "Browse our complete range of handcrafted jewelry."}
+          {headerSubtitle}
         </p>
       </div>
       
@@ -96,9 +115,13 @@ function ShopGrid() {
         </div>
       ) : displayedProducts.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-sm border border-stone-100 flex flex-col items-center">
-          <p className="text-stone-500 text-sm tracking-wider uppercase mb-4">No products found for "{searchQuery}".</p>
+          <p className="text-stone-500 text-sm tracking-wider uppercase mb-4">
+            {searchQuery 
+              ? `No products found for "${searchQuery}".` 
+              : `No products currently available in ${categoryQuery}.`}
+          </p>
           <Link href="/shop" className="text-xs font-bold tracking-[0.2em] text-[#8B5A2B] hover:text-stone-900 uppercase transition-colors">
-            Clear Search ⟶
+            View All Collections ⟶
           </Link>
         </div>
       ) : (

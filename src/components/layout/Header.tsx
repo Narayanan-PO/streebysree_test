@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCart } from "@/context/CartContext";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
@@ -10,16 +11,39 @@ export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<string[]>([]);
   const router = useRouter();
 
   const closeMenu = () => setIsMobileMenuOpen(false);
+
+  // Fetch unique categories dynamically from Supabase
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data, error } = await supabase
+        .from('products')
+        .select('Category');
+
+      if (!error && data) {
+        const unique = Array.from(
+          new Set(
+            data
+              .map((item: { Category?: string }) => item.Category?.trim())
+              .filter((cat): cat is string => Boolean(cat))
+          )
+        ).sort();
+        setCategories(unique);
+      }
+    }
+
+    fetchCategories();
+  }, []);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       setIsSearchOpen(false);
       router.push(`/shop?search=${encodeURIComponent(searchQuery.trim())}`);
-      setSearchQuery(""); // Clear it after searching
+      setSearchQuery("");
     }
   };
 
@@ -35,6 +59,7 @@ export default function Header() {
               <button 
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="md:hidden flex flex-col justify-center items-center h-8 w-6 space-y-1.5 focus:outline-none group"
+                aria-label="Open mobile menu"
               >
                 <span className="block h-[1px] w-full bg-stone-800 group-hover:bg-[#8B5A2B] transition-colors"></span>
                 <span className="block h-[1px] w-full bg-stone-800 group-hover:bg-[#8B5A2B] transition-colors"></span>
@@ -82,16 +107,13 @@ export default function Header() {
             </div>
           </div>
 
-          {/* --- INLINE SEARCH BAR (Redesigned for Elegance) --- */}
+          {/* --- INLINE SEARCH BAR --- */}
           <div className={`absolute inset-0 flex items-center justify-center px-4 sm:px-8 transition-all duration-300 ${isSearchOpen ? 'opacity-100 z-20 translate-y-0' : 'opacity-0 pointer-events-none -translate-y-4'}`}>
             <form onSubmit={handleSearchSubmit} className="flex w-full max-w-2xl items-center border-b border-stone-300 pb-2 focus-within:border-stone-900 transition-colors">
-              
-              {/* Left Magnifying Glass */}
               <svg className="w-5 h-5 text-stone-400 flex-shrink-0 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
               </svg>
               
-              {/* Input Field */}
               <input 
                 type="text" 
                 placeholder="Search for jewelry..." 
@@ -101,7 +123,6 @@ export default function Header() {
                 autoFocus={isSearchOpen}
               />
               
-              {/* Delicate Submit Arrow */}
               <button 
                 type="submit" 
                 disabled={!searchQuery.trim()}
@@ -117,10 +138,8 @@ export default function Header() {
                 </svg>
               </button>
 
-              {/* Tiny Separator Line */}
               <div className="h-4 w-[1px] bg-stone-300 mx-2"></div>
 
-              {/* Elegant Close 'X' */}
               <button 
                 type="button" 
                 onClick={() => { setIsSearchOpen(false); setSearchQuery(""); }}
@@ -131,7 +150,6 @@ export default function Header() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-
             </form>
           </div>
 
@@ -147,24 +165,82 @@ export default function Header() {
       )}
 
       <div 
-        className={`fixed inset-y-0 left-0 z-[70] w-4/5 max-w-sm bg-[#FAF8F5] shadow-2xl transition-transform duration-300 ease-in-out md:hidden flex flex-col ${
+        className={`fixed inset-y-0 left-0 z-[70] w-4/5 max-w-xs bg-[#FAF8F5] shadow-2xl transition-transform duration-300 ease-in-out md:hidden flex flex-col justify-between overflow-hidden ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex items-center justify-between px-6 py-6 border-b border-stone-200">
-          <span className="text-xl font-serif tracking-wide text-stone-900">Menu</span>
-          <button onClick={closeMenu} className="p-2 text-2xl font-light text-stone-400 hover:text-stone-900">×</button>
+        <div className="flex-1 overflow-y-auto">
+          {/* Menu Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-stone-200/80">
+            <span className="text-lg font-serif tracking-wide text-stone-900">Collections & Menu</span>
+            <button onClick={closeMenu} className="p-1 text-2xl font-light text-stone-400 hover:text-stone-900 leading-none">×</button>
+          </div>
+
+          {/* Main Navigation */}
+          <div className="px-6 py-6 border-b border-stone-200/60">
+            <nav className="flex flex-col space-y-4">
+              <Link href="/" onClick={closeMenu} className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-800 hover:text-[#8B5A2B] transition-colors">
+                Home
+              </Link>
+              <Link href="/shop" onClick={closeMenu} className="text-xs font-semibold uppercase tracking-[0.2em] text-stone-800 hover:text-[#8B5A2B] transition-colors">
+                Shop All Collections
+              </Link>
+            </nav>
+          </div>
+
+          {/* Dynamic Categories Section */}
+          <div className="px-6 py-6">
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.25em] text-stone-400 mb-4">
+              Shop By Ornament
+            </h4>
+            <div className="flex flex-col space-y-3.5">
+              {categories.length > 0 ? (
+                categories.map((cat) => (
+                  <Link
+                    key={cat}
+                    href={`/shop?category=${encodeURIComponent(cat)}`}
+                    onClick={closeMenu}
+                    className="text-sm font-light text-stone-700 hover:text-[#8B5A2B] transition-colors flex items-center justify-between"
+                  >
+                    <span>{cat}</span>
+                    <span className="text-stone-300 text-xs">→</span>
+                  </Link>
+                ))
+              ) : (
+                <Link
+                  href="/shop"
+                  onClick={closeMenu}
+                  className="text-xs text-stone-500 hover:text-[#8B5A2B] italic transition-colors"
+                >
+                  View All Products →
+                </Link>
+              )}
+            </div>
+          </div>
+
+          {/* Additional Links */}
+          <div className="px-6 py-4 border-t border-stone-200/60">
+            <div className="flex flex-col space-y-3">
+              <Link href="/about" onClick={closeMenu} className="text-xs uppercase tracking-[0.15em] text-stone-500 hover:text-stone-900 transition-colors">
+                About Our Brand
+              </Link>
+              <Link href="/shipping" onClick={closeMenu} className="text-xs uppercase tracking-[0.15em] text-stone-500 hover:text-stone-900 transition-colors">
+                Shipping & Returns
+              </Link>
+            </div>
+          </div>
         </div>
 
-        <nav className="flex flex-col space-y-6 px-6 pt-8">
-          <Link href="/" onClick={closeMenu} className="text-sm font-medium uppercase tracking-[0.2em] text-stone-800 transition-colors hover:text-[#8B5A2B]">Home</Link>
-          <Link href="/shop" onClick={closeMenu} className="text-sm font-medium uppercase tracking-[0.2em] text-stone-800 transition-colors hover:text-[#8B5A2B]">Shop All</Link>
-          <Link href="/about" onClick={closeMenu} className="text-sm font-medium uppercase tracking-[0.2em] text-stone-800 transition-colors hover:text-[#8B5A2B]">About Us</Link>
-        </nav>
-
-        <div className="mt-8 mx-6 border-t border-stone-200 pt-8">
-          <a href="https://wa.me/918891027146" target="_blank" rel="noopener noreferrer" className="flex items-center text-xs font-semibold uppercase tracking-[0.2em] text-stone-800 transition-colors hover:text-[#8B5A2B]">
-            Chat with Support ✦
+        {/* WhatsApp Footer */}
+        <div className="p-5 border-t border-stone-200 bg-[#F5F2EC]">
+          <a 
+            href="https://wa.me/918891027146" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-[#1E293B] text-[#EAB308] text-[11px] font-bold uppercase tracking-[0.15em] rounded-md shadow-sm hover:bg-stone-800 transition-colors text-center"
+          >
+            <span>Chat on WhatsApp</span>
+            <span>✦</span>
           </a>
         </div>
       </div>

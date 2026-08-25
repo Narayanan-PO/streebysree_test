@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
+import TestimonialsCarousel from "@/components/TestimonialsCarousel"; // 1. ADDED IMPORT
 
 export const revalidate = 60;
 
@@ -19,11 +20,23 @@ export default async function HomePage() {
     .limit(4);
   const products = featuredProducts || [];
 
+  // 4. Fetch ALL active Testimonials (no limit - carousel paginates them)
+  const { data: testimonialData } = await supabase
+    .from('testimonials')
+    .select('*')
+    .eq('is_active', true)
+    .order('created_at', { ascending: false }); // 2. REMOVED .limit(3)
+  const testimonials = testimonialData || [];
+
   // Fallbacks just in case the database is empty
   const heroImage = settings?.hero_image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?q=80&w=2940&auto=format&fit=crop";
   const heroTagline = settings?.hero_tagline || "Adorning Every Stree";
   const heroTitle = settings?.hero_title || "Stree by Sree";
   const heroDesc = settings?.hero_description || "Traditional, lightweight, and anti-tarnish jewellery designed for everyday elegance.";
+
+  const storyTitle = settings?.story_title || "Our Story";
+  const storyText = settings?.story_text || "Stree by Sree began with a simple idea: traditional jewellery shouldn't mean choosing between beauty and everyday wearability. Every piece is designed to be lightweight, anti-tarnish, and true to the elegance of Indian craftsmanship.";
+  const storyImage = settings?.story_image || "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?q=80&w=1600&auto=format&fit=crop";
 
   return (
     <div className="flex flex-col min-h-screen bg-[#FAF8F5]">
@@ -159,31 +172,60 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 4. TRUST SIGNALS */}
-      <section className="py-16 text-center bg-[#FAF8F5] border-b border-stone-200">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 gap-x-4 sm:grid-cols-4 px-4">
-          <div className="flex flex-col items-center">
-            <span className="mb-3 text-2xl text-[#8B5A2B]">✧</span>
-            <h4 className="mb-2 text-xs font-bold tracking-[0.2em] text-stone-800 uppercase">Waterproof</h4>
-            <p className="text-xs font-light text-stone-600">Wear it everyday, everywhere.</p>
+      {/* 4. OUR STORY TEASER */}
+      <section className="py-20 sm:py-28 bg-[#FAF8F5]">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-16 items-center">
+          <div className="aspect-[4/3] w-full overflow-hidden">
+            <img 
+              src={storyImage} 
+              alt="Our Story" 
+              className="h-full w-full object-cover"
+            />
           </div>
-          <div className="flex flex-col items-center">
-            <span className="mb-3 text-2xl text-[#8B5A2B]">✧</span>
-            <h4 className="mb-2 text-xs font-bold tracking-[0.2em] text-stone-800 uppercase">Anti-Tarnish</h4>
-            <p className="text-xs font-light text-stone-600">Premium materials that last.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="mb-3 text-2xl text-[#8B5A2B]">✧</span>
-            <h4 className="mb-2 text-xs font-bold tracking-[0.2em] text-stone-800 uppercase">Fast Shipping</h4>
-            <p className="text-xs font-light text-stone-600">Will be delivered within 1 week.</p>
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="mb-3 text-2xl text-[#8B5A2B]">✧</span>
-            <h4 className="mb-2 text-xs font-bold tracking-[0.2em] text-stone-800 uppercase">Support</h4>
-            <p className="text-xs font-light text-stone-600">Direct ordering via WhatsApp.</p>
+          <div className="text-center md:text-left">
+            <span className="mb-3 block text-xs font-medium tracking-[0.3em] text-[#8B5A2B] uppercase">
+              Our Heritage
+            </span>
+            <h2 className="mb-6 text-3xl font-serif text-stone-900">{storyTitle}</h2>
+            <p className="mb-8 text-sm font-light leading-relaxed text-stone-600">
+              {storyText}
+            </p>
+            <Link 
+              href="/about" 
+              className="inline-block border-b border-[#8B5A2B] pb-1 text-xs font-medium tracking-[0.2em] text-[#8B5A2B] uppercase transition-colors hover:text-stone-900 hover:border-stone-900"
+            >
+              Read Our Story
+            </Link>
           </div>
         </div>
       </section>
+
+      {/* 5. TRUST SIGNALS */}
+      <section className="py-16 bg-white border-y border-stone-200">
+        <div className="mx-auto max-w-6xl px-4">
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {[
+              { title: "Waterproof", desc: "Wear it everyday, everywhere." },
+              { title: "Anti-Tarnish", desc: "Premium materials that last." },
+              { title: "Fast Shipping", desc: "Will be delivered within 1 week." },
+              { title: "Support", desc: "Direct ordering via WhatsApp." },
+            ].map((item) => (
+              <div 
+                key={item.title} 
+                className="flex flex-col items-center text-center border border-stone-200 rounded-sm px-4 py-8 transition-colors hover:border-[#8B5A2B]"
+              >
+                <span className="mb-3 text-2xl text-[#8B5A2B]">✧</span>
+                <h4 className="mb-2 text-xs font-bold tracking-[0.2em] text-stone-800 uppercase">{item.title}</h4>
+                <p className="text-xs font-light text-stone-600">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 6. TESTIMONIALS CAROUSEL */}
+      {/* 3. SWAPPED OUT THE STATIC HTML FOR YOUR NEW COMPONENT */}
+      <TestimonialsCarousel testimonials={testimonials} />
       
     </div>
   );
