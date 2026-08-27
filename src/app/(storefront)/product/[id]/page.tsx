@@ -45,7 +45,35 @@ export default function ProductDetailsPage() {
     if (productId) fetchProduct();
   }, [productId]);
 
-  if (isLoading) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-stone-500 uppercase tracking-[0.2em] text-xs animate-pulse">Loading details...</div>;
+if (isLoading) {
+    return (
+      <div className="bg-[#FAF8F5] min-h-screen py-16">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 animate-pulse">
+            {/* Left: Image Skeleton */}
+            <div className="flex flex-col gap-4">
+              <div className="aspect-[4/5] w-full bg-stone-200"></div>
+              <div className="flex gap-4 overflow-hidden">
+                <div className="w-20 h-24 bg-stone-200 flex-shrink-0"></div>
+                <div className="w-20 h-24 bg-stone-200 flex-shrink-0"></div>
+                <div className="w-20 h-24 bg-stone-200 flex-shrink-0"></div>
+              </div>
+            </div>
+            {/* Right: Details Skeleton */}
+            <div className="flex flex-col pt-2">
+              <div className="h-3 bg-stone-200 w-24 mb-4"></div>
+              <div className="h-8 bg-stone-200 w-3/4 mb-8"></div>
+              <div className="h-6 bg-stone-200 w-1/4 mb-10"></div>
+              <div className="h-14 bg-stone-200 w-full mb-3"></div>
+              <div className="h-14 bg-stone-200 w-full mb-10"></div>
+              <div className="h-24 bg-stone-200 w-full mb-6"></div>
+              <div className="h-24 bg-stone-200 w-full"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
   if (!product) return <div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-stone-500 uppercase tracking-widest text-xs">Product not found.</div>;
 
   const allImages = [product.Image, ...(product.Gallery || [])].filter(Boolean);
@@ -137,7 +165,7 @@ export default function ProductDetailsPage() {
                 </button>
               )}
 
-              {/* Direct WhatsApp Order Button (Now an Anchor Tag!) */}
+              {/* Direct WhatsApp Order Button */}
               {product.Stock > 0 ? (
                 <a 
                   href={whatsappUrl}
@@ -166,7 +194,7 @@ export default function ProductDetailsPage() {
             )}
 
             {/* Details Table */}
-            <div className="border-t border-stone-200 pt-6">
+            <div className="mb-8 border-t border-stone-200 pt-6">
               <h3 className="text-[10px] font-bold text-stone-900 uppercase tracking-[0.2em] mb-4">Details</h3>
               <ul className="space-y-4 text-sm text-stone-500 font-light">
                 {product.Material && (
@@ -188,6 +216,16 @@ export default function ProductDetailsPage() {
                   </span>
                 </li>
               </ul>
+            </div>
+
+            {/* SINGLE RETURN POLICY BLOCK AT THE BOTTOM */}
+            <div className="p-4 bg-white border border-[#8B5A2B]/20 text-center">
+              <span className="block mb-1 text-[10px] font-bold tracking-[0.2em] text-[#8B5A2B] uppercase">
+                Return Policy
+              </span>
+              <p className="text-[11px] text-stone-600 leading-relaxed uppercase tracking-wider">
+                Returns or exchanges are only accepted if a continuous, unedited unboxing video is shared within 24 hours of delivery.
+              </p>
             </div>
 
           </div>

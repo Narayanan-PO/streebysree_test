@@ -16,7 +16,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [isChecking, setIsChecking] = useState(true);
 
   // 🔒 THE MASTER PASSWORD
-  const MASTER_PASSWORD = "StreebySree@2001"; 
+  const MASTER_PASSWORD = "StreeBySree@2001"; 
 
   useEffect(() => {
     const unlocked = sessionStorage.getItem("stree_admin_unlocked");
@@ -134,7 +134,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="text-xl font-bold text-[#EAB308]">S</span>
             ) : (
               <div className="flex flex-col">
-                <span className="text-sm font-bold tracking-wider text-[#EAB308] uppercase">StreebySree</span>
+                <span className="text-sm font-bold tracking-wider text-[#EAB308] uppercase">Stree by Sree</span>
                 <span className="text-[10px] text-slate-400 tracking-widest uppercase">Admin Workspace</span>
               </div>
             )}

@@ -1,6 +1,13 @@
 import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import { Metadata } from "next";
+
+// BUG-05: Added unique SEO page title
+export const metadata: Metadata = {
+  title: "Home | Stree by Sree",
+  description: "Traditional, lightweight, and anti-tarnish jewellery designed for everyday elegance.",
+};
 
 export const revalidate = 60;
 
@@ -39,7 +46,7 @@ export default async function HomePage() {
   // Fallbacks just in case the database is empty
   const heroImage = settings?.hero_image || "https://images.unsplash.com/photo-1601121141461-9d6647bca1ed?q=80&w=2940&auto=format&fit=crop";
   const heroTagline = settings?.hero_tagline || "Adorning Every Stree";
-  const heroTitle = settings?.hero_title || "Stree by Sree";
+  const heroTitle = settings?.hero_title || "Stree by Sree"; // BUG-01: Correctly spaced
   const heroDesc = settings?.hero_description || "Traditional, lightweight, and anti-tarnish jewellery designed for everyday elegance.";
 
   const storyTitle = settings?.story_title || "Our Story";
@@ -179,8 +186,9 @@ export default async function HomePage() {
                           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110" 
                         />
                       ) : (
-                        <span className="text-2xl font-light text-stone-500 uppercase tracking-widest">
-                          {category.name.charAt(0)}
+                        // BUG-04: Replaced stray initial letter with elegant icon
+                        <span className="text-2xl text-[#D4AF37]">
+                          ✧
                         </span>
                       )}
                     </div>
@@ -288,7 +296,8 @@ export default async function HomePage() {
             {[
               { title: "Waterproof", desc: "Wear it everyday, everywhere." },
               { title: "Anti-Tarnish", desc: "Premium materials that last." },
-              { title: "Fast Shipping", desc: "Will be delivered within 1 week." },
+              // BUG-03: Updated Delivery Text to match shipping policies
+              { title: "Fast Shipping", desc: "Dispatched in 1-2 days." }, 
               { title: "Support", desc: "Direct ordering via WhatsApp." },
             ].map((item) => (
               <div 

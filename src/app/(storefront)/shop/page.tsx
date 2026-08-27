@@ -105,12 +105,6 @@ function ShopGrid() {
     headerSubtitle = "Shop our highest-rated and bestselling pieces.";
   }
 
-  // --- NEW X-RAY DEBUGGING LOGIC ---
-  // This grabs every single category currently attached to your products
-  const actualDatabaseCategories = Array.from(
-    new Set(allProducts.map(p => p.Category ? `"${p.Category}"` : "EMPTY_OR_NULL"))
-  ).join(", ");
-
   return (
     <>
       <div className="text-center mb-16">
@@ -124,10 +118,15 @@ function ShopGrid() {
       </div>
       
       {isLoading ? (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-stone-400 font-medium tracking-[0.2em] uppercase text-xs animate-pulse">
-            Loading beautiful pieces...
-          </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+          {/* PREMIUM SKELETON LOADER MOVED INSIDE THE DIV */}
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+            <div key={n} className="flex flex-col animate-pulse">
+              <div className="aspect-[4/5] w-full bg-stone-200 mb-4"></div>
+              <div className="h-3 bg-stone-200 w-3/4 mx-auto mb-2"></div>
+              <div className="h-3 bg-stone-200 w-1/4 mx-auto"></div>
+            </div>
+          ))}
         </div>
       ) : displayedProducts.length === 0 ? (
         <div className="text-center py-20 bg-white rounded-sm border border-stone-100 flex flex-col items-center">
@@ -136,18 +135,7 @@ function ShopGrid() {
               ? `No products found for "${searchQuery}".` 
               : `No products currently available.`}
           </p>
-
-          {/* THE X-RAY BOX: Only shows up when things are broken! */}
-          {categoryQuery && (
-            <div className="mt-4 p-6 bg-red-50 border border-red-200 text-red-900 text-xs text-left max-w-2xl mx-auto rounded-sm">
-              <strong className="text-sm tracking-widest uppercase mb-2 block">Database Mismatch Detected</strong>
-              <p className="mb-2">The website is looking for products tagged with: <strong>"{categoryQuery}"</strong></p>
-              <p>But the actual tags on the products in your Supabase database are:</p>
-              <p className="mt-2 font-mono bg-white p-3 border border-red-100">{actualDatabaseCategories}</p>
-            </div>
-          )}
-
-          <Link href="/shop" className="mt-8 text-xs font-bold tracking-[0.2em] text-[#8B5A2B] hover:text-stone-900 uppercase transition-colors">
+          <Link href="/shop" className="mt-4 text-xs font-bold tracking-[0.2em] text-[#8B5A2B] hover:text-stone-900 uppercase transition-colors">
             View All Collections ⟶
           </Link>
         </div>
@@ -200,10 +188,13 @@ export default function ShopPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 bg-[#FAF8F5] min-h-screen">
       <Suspense fallback={
-        <div className="flex justify-center items-center h-64">
-           <p className="text-stone-400 font-medium tracking-[0.2em] uppercase text-xs animate-pulse">
-            Loading collection...
-          </p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12 w-full animate-pulse">
+           {[1, 2, 3, 4].map((n) => (
+             <div key={n} className="flex flex-col">
+               <div className="aspect-[4/5] w-full bg-stone-200 mb-4"></div>
+               <div className="h-3 bg-stone-200 w-3/4 mx-auto mb-2"></div>
+             </div>
+           ))}
         </div>
       }>
         <ShopGrid />

@@ -8,7 +8,7 @@ export default function Footer() {
         {/* Brand Identity */}
         <div className="mb-8">
           <h3 className="text-lg font-light tracking-widest text-blue-950 uppercase mb-3">
-            StreebySree
+            Stree by Sree
           </h3>
           <p className="text-xs font-light leading-relaxed text-gray-500 max-w-md mx-auto">
             Premium anti-tarnish & waterproof jewellery designed for the modern traditionalist.
@@ -39,8 +39,8 @@ export default function Footer() {
         
         {/* Copyright */}
         <div className="pt-8 border-t border-stone-100">
-          <p className="text-[9px] sm:text-[10px] text-gray-400 uppercase tracking-widest">
-            © {new Date().getFullYear()} StreebySree. All rights reserved.
+          <p className="text-[10px] text-stone-500 font-light tracking-widest uppercase">
+            © {new Date().getFullYear()} Stree by Sree. All rights reserved.
           </p>
         </div>
       </div>
